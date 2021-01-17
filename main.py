@@ -82,27 +82,17 @@ def gameloop():
     
     transition_frames = 0
     untransition_frames = Settings.TRANSITION_MAX_FRAMES
-    redraw, redraw_frames =False, 0
     while is_running:
         dt = Settings.clock.tick(60) / 1000 # Seconds elapsed
+        print(1/dt)
         
         # Handle events
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB: 
-                    if Settings.DEBUG:
-                        Settings.DEBUG = False
-                        Settings.DEBUG_DIRTY_RECTS = True
-                    elif Settings.DEBUG_DIRTY_RECTS:
-                        Settings.DEBUG = False
-                        Settings.DEBUG_DIRTY_RECTS = False
-                    else:
-                        Settings.DEBUG = True
-                        Settings.DEBUG_DIRTY_RECTS = False
-
+                    Settings.DEBUG = not Settings.DEBUG
                     print("Debug mode", ["off", "on"][Settings.DEBUG])
-                    print("Dirty Rect Debug mode", ["off", "on"][Settings.DEBUG_DIRTY_RECTS])
 
             if event.type == pygame.QUIT:
                 if not is_title:
@@ -110,7 +100,6 @@ def gameloop():
                 return
                 
             if event.type == pygame.VIDEORESIZE:
-                redraw = True
                 old_surface_saved = Settings.true_surface
                 Settings.true_surface = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
                 Settings.true_surface.blit(old_surface_saved, (0,0))
@@ -123,21 +112,17 @@ def gameloop():
             Settings.gui_manager.process_events(event)
         Settings.gui_manager.update(dt)
 
-        prev_title, prev_pause = is_title, is_paused
+        prev_title = is_title
         is_running, is_paused, is_title, save, restart = Settings.gui.handle_events(events)
         if restart:
             return 1
-        if not prev_pause == is_paused:
-            redraw_frames = 2
         if prev_title == True and is_title == False:
-            redraw = True
             transition_frames = Settings.TRANSITION_MAX_FRAMES
             Settings.SELECTED_SAVE = save
             level.load_save(save_num=Settings.SELECTED_SAVE)
             Settings.MUSIC["ambient"].Play(loops=-1)
             Settings.MUSIC["title"].Stop(fade_out_ms=1000)
         if prev_title == False and is_title == True:
-            redraw = True
             level.save_game()
             Settings.MUSIC["ambient"].Stop(fade_out_ms=1000)
             Settings.MUSIC["title"].Play(loops=-1)
@@ -148,7 +133,6 @@ def gameloop():
             dt = 0
         Settings.window_rect = new_window_rect
 
-        camera_moved = True
         if not is_title:
             # Handle physics and animations if unpaused
             if not is_paused and damage_freeze == 0:
@@ -161,7 +145,6 @@ def gameloop():
                 while i < len(level.enemies):
                     if level.enemies[i].state == "dead":
                         del level.enemies[i]
-                        redraw = True
                     else:
                         level.enemies[i].update_state(level.player.position)
                         hit_occured = hit_occured or level.enemies[i].physics_process(1/60, physical_colliders, level.player.position, attack_colliders)
@@ -172,17 +155,14 @@ def gameloop():
 
                 state_changes = level.player.physics_process(1/60, physical_colliders, damage_colliders, level.get_damage_colliders(), level.get_hitable_colliders(), level.get_save_colliders(), level.get_water_colliders(), level.transitions, hit_occured)
                 if state_changes["respawn"]:
-                    redraw_frames = 240
                     def end_animation(self):
                         level.load_level(level_num=level.save_level)
                         level.player.hearts = Settings.PLAYER_HEARTS
                         level.player.play_animation("unsit", speed=0.5)
                     level.player.play_animation("death", on_animation_end=end_animation)
                 elif state_changes["reset"]:
-                    redraw_frames = 240
                     level.player.play_animation("death", on_animation_end=lambda x: level.reset_level())
                 elif not state_changes["transition"] == None:
-                    redraw_frames = 240
                     transition_frames = Settings.TRANSITION_MAX_FRAMES
                 elif state_changes["hit"]:
                     damage_freeze = 8
@@ -194,7 +174,7 @@ def gameloop():
                     level.save_game()
                 
 
-                camera_moved = Settings.camera.update_position(dt, level.player.position, Settings.surface)
+                Settings.camera.update_position(dt, level.player.position, Settings.surface)
             else:
                 level.player.input_static(events)
                 dt = 0
@@ -203,31 +183,29 @@ def gameloop():
                     damage_freeze-=1
 
             # Render
-            dirty_rects = []
             Settings.surface.fill((0,0,0))
             level.render_behind(dt, Settings.surface, Settings.camera.position)
 
             # Entities
-            dirty_rects += level.player.render(Settings.surface, Settings.camera.position, delta=dt)
+            level.player.render(Settings.surface, Settings.camera.position, delta=dt)
             for enemy in level.enemies:
-                dirty_rects += enemy.render(Settings.surface, Settings.camera.position, delta=dt)
+                enemy.render(Settings.surface, Settings.camera.position, delta=dt)
 
             # Render frontground before gui
-            dirty_rects += level.render_infront(dt, Settings.surface, Settings.camera.position)
+            level.render_infront(dt, Settings.surface, Settings.camera.position)
 
             # Debug rendering
             if Settings.DEBUG:
                 level.render_colliders(dt, Settings.surface, Settings.camera.position)
-                dirty_rects += level.player.render_colliders(dt, Settings.surface, Settings.camera.position)
+                level.player.render_colliders(dt, Settings.surface, Settings.camera.position)
                 for enemy in level.enemies:
-                    dirty_rects += enemy.render_colliders(dt, Settings.surface, Settings.camera.position)
+                    enemy.render_colliders(dt, Settings.surface, Settings.camera.position)
             
             # Ingame Gui rendering
-            dirty_rects += Settings.gui.render_ingame(dt, Settings.surface, level.player, Settings.camera.position)
+            Settings.gui.render_ingame(dt, Settings.surface, level.player, Settings.camera.position)
 
             # Handle screen fade transition
             if transition_frames > 0:
-                redraw=True
                 transition_frames -= 1
                 alpha = 255 - (transition_frames / Settings.TRANSITION_MAX_FRAMES)*255
                 Settings.surface.fill((0,0,0,alpha))
@@ -236,7 +214,6 @@ def gameloop():
                         level.load_level(level_num=level.player.transition["to_level"], transition=level.player.transition)
                     untransition_frames = Settings.TRANSITION_MAX_FRAMES
             if untransition_frames > 0:
-                redraw=True
                 untransition_frames -= 1
                 alpha = (untransition_frames / Settings.TRANSITION_MAX_FRAMES)*255
                 Settings.surface.fill((0,0,0,alpha), special_flags=pygame.BLEND_RGBA_SUB)
@@ -247,24 +224,7 @@ def gameloop():
         # Scale to true display
         Settings.true_surface.blit(pygame.transform.scale(Settings.surface, Settings.true_surface.get_rect().size), (0, 0))
 
-        if camera_moved or is_title or redraw or Settings.DEBUG or (redraw_frames > 0):
-            pygame.display.update()
-            redraw_frames = max(redraw_frames-1, 0)
-            redraw=False
-        else:
-            # Note update function does not correctly handling dirty rects on windows
-            scaleX, scaleY = Settings.true_surface.get_rect().width / Settings.surface.get_rect().width, Settings.true_surface.get_rect().height / Settings.surface.get_rect().height
-            for rect in dirty_rects:
-                # rect.inflate_ip(24, 24)
-                # Scale to true display
-                rect.update(rect.left*scaleX, rect.top*scaleY, rect.width*scaleX, rect.height*scaleY)
-
-            if Settings.DEBUG_DIRTY_RECTS:
-                for i in dirty_rects:
-                    pygame.draw.rect(Settings.true_surface, (0,255,255), i)
-                pygame.display.update()
-            else:
-                pygame.display.update(dirty_rects)
+        pygame.display.update()
     return 0
 
 def cleanup():
