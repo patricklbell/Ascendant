@@ -1,0 +1,6 @@
+.venv/
+.tileset_resources/
+.vscode/
+.cache/
+Levels/.tools/
+Levels/.level_unused/

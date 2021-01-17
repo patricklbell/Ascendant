@@ -1,0 +1,16 @@
+{
+    "filename":"UI/Animations/health_spritesheet.png",
+    "animations":[
+        {
+            "name":"idle",
+            "x_init_offset":0,
+            "y_init_offset":0,
+            "x_size":59,
+            "y_size":18,
+            "x_offset":59,
+            "y_offset":0,
+            "time":1,
+            "frame_length":8
+        }
+    ]
+}

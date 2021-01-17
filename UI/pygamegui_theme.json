@@ -1,0 +1,309 @@
+{
+    "defaults":
+    {
+        "colours":
+        {
+            "normal_bg":"#00000000",
+            "hovered_bg":"#00000000",
+            "disabled_bg":"#00000000",
+            "selected_bg":"#00000000",
+            "active_bg":"#00000000",
+            "dark_bg":"#00000000",
+            "normal_text":"#FFFFFFFF",
+            "hovered_text":"#FFFFFFFF",
+            "selected_text":"#FFFFFFFF",
+            "disabled_text":"#DDDDDDFF",
+            "link_text": "#FFFFFFFF",
+            "link_hover": "#00000000",
+            "link_selected": "#00000000",
+            "text_shadow": "#00000000",
+            "normal_border": "#00000000",
+            "hovered_border": "#00000000",
+            "disabled_border": "#00000000",
+            "selected_border": "#00000000",
+            "active_border": "#00000000",
+            "filled_bar":"#FFFFFFFF",
+            "unfilled_bar":"#DDDDDDFF"
+        }
+    },
+    "button":
+    {
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "16",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        },
+        "images":
+         {
+             "hovered_image": {
+                 "package": "UI.Images",
+                 "resource": "arrow.png"
+             },
+             "selected_image": {
+                 "package": "UI.Images",
+                 "resource": "arrow.png"
+             }
+         },
+        "misc":
+        {
+            "border_width": "0",
+            "padding": "0,0",
+            "link_normal_underline": "0",
+            "link_hover_underline": "0",
+            "text_horiz_alignment": "right",
+            "shadow_width": "0"
+        }
+    },
+    "#small_button":
+    {
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "12",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        },
+        "images":
+         {
+             "hovered_image": {
+                 "package": "UI.Images",
+                 "resource": "arrow.png"
+             },
+             "selected_image": {
+                 "package": "UI.Images",
+                 "resource": "arrow.png"
+             }
+         },
+        "misc":
+        {
+            "border_width": "0",
+            "padding": "0,0",
+            "link_normal_underline": "0",
+            "link_hover_underline": "0",
+            "text_horiz_alignment": "right",
+            "shadow_width": "0"
+        }
+    },
+    "#left_button":
+    {
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "16",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        },
+        "images":
+         {
+             "hovered_image": {
+                 "package": "UI.Images",
+                 "resource": "arrow.png"
+             },
+             "selected_image": {
+                 "package": "UI.Images",
+                 "resource": "arrow.png"
+             }
+         },
+        "misc":
+        {
+            "border_width": "0",
+            "padding": "0,0",
+            "link_normal_underline": "0",
+            "link_hover_underline": "0",
+            "text_horiz_alignment": "left",
+            "shadow_width": "0"
+        }
+    },
+    "#center_button":
+    {
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "16",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        },
+        "images":
+         {
+             "hovered_image": {
+                 "package": "UI.Images",
+                 "resource": "arrow.png"
+             },
+             "selected_image": {
+                 "package": "UI.Images",
+                 "resource": "arrow.png"
+             }
+         },
+        "misc":
+        {
+            "border_width": "0",
+            "padding": "0,0",
+            "link_normal_underline": "0",
+            "link_hover_underline": "0",
+            "text_horiz_alignment": "center",
+            "shadow_width": "0"
+        }
+    },
+    "panel":{
+        "colours":
+        {
+            "dark_bg":"#000000AA"
+        },
+        "misc":
+        {
+            "border_width": "0",
+            "shadow_width": "0"
+        }
+    },
+    "label":{
+        "misc":
+        {
+            "text_horiz_alignment":"right"
+        },
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "16",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        }
+    },
+    "#small_label":{
+        "misc":
+        {
+            "text_horiz_alignment":"left"
+        },
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "12",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        }
+    },
+    "#center_label":{
+        "misc":
+        {
+            "text_horiz_alignment":"center"
+        },
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "16",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        }
+    },
+    "drop_down_menu.#selected_option":{
+        "misc":
+        {
+            "text_horiz_alignment":"right",
+            "border_width": "0",
+            "padding": "0,0",
+            "link_normal_underline": "0",
+            "link_hover_underline": "0",
+            "shadow_width": "0"
+        },
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "12",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        }  
+    },
+    "drop_down_menu.#drop_down_options_list.button":{
+        "misc":
+        {
+            "text_horiz_alignment":"right",
+            "border_width": "0",
+            "padding": "0,0",
+            "link_normal_underline": "0",
+            "link_hover_underline": "0",
+            "shadow_width": "0"
+        },
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "12",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        }
+    },
+    
+    "horizontal_slider":
+    {
+        "colours":
+        {
+            "normal_bg": "#25292e88",
+            "hovered_bg": "#25292e88",
+            "disabled_bg": "#25292e88",
+            "selected_bg": "#25292e88",
+            "active_bg": "#25292e88",
+            "dark_bg": "#25292e88"
+        },
+        "misc":
+        {
+        "shape": "rectangle",
+        "enable_arrow_buttons": "0",
+        "sliding_button_width": "15"
+        }
+    },
+    "horizontal_slider.button":
+    {
+        "misc":
+        {
+        "border_width": "1"
+        }
+    },
+    "horizontal_slider.#sliding_button":
+    {
+        "colours":
+        {
+        "normal_bg": "#FFFFFF",
+        "hovered_bg":"#FFFFFF",
+        "disabled_bg":"#FFFFFF",
+        "selected_bg":"#FFFFFF",
+        "active_bg":"#FFFFFF",
+        "dark_bg":"#FFFFFF"
+        }
+    }
+}
