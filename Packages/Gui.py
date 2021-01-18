@@ -238,7 +238,9 @@ class Gui():
                 manager=Settings.gui_manager
             ),
             "resolution": pygame_gui.elements.UIDropDownMenu(
-                options_list=["1120x315","808x342","772x433", "592x370", "660x495"],
+                # options_list=["1120x315","808x342","772x433", "592x370", "660x495"],
+                # options_list=["1280x360","850x360","820x460", "640x400", "700x525"],
+                options_list=["1100x300","800x340","770x430", "600x380", "660x500"],
                 starting_option=Settings.RESOLUTION_STR,
                 relative_rect=pygame.Rect(
                     (Settings.RESOLUTION[0]/2, Settings.RESOLUTION[1]/6+vertical_gap), (140, vertical_height)),

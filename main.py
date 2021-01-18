@@ -84,7 +84,6 @@ def gameloop():
     untransition_frames = Settings.TRANSITION_MAX_FRAMES
     while is_running:
         dt = Settings.clock.tick(60) / 1000 # Seconds elapsed
-        print(1/dt)
         
         # Handle events
         events = pygame.event.get()
@@ -170,26 +169,28 @@ def gameloop():
                 should_save = level.player.input(events)
                 if should_save:
                     Settings.gui.save_animation.play_animation("base")
+                    level.player.hearts = Settings.PLAYER_HEARTS
                     level.save_level = level.level_num
                     level.save_game()
                 
 
                 Settings.camera.update_position(dt, level.player.position, Settings.surface)
+                _dt = dt
             else:
                 level.player.input_static(events)
-                dt = 0
+                _dt = 0
 
                 if damage_freeze > 0:
                     damage_freeze-=1
 
             # Render
             Settings.surface.fill((0,0,0))
-            level.render_behind(dt, Settings.surface, Settings.camera.position)
+            level.render_behind(_dt, Settings.surface, Settings.camera.position)
 
             # Entities
-            level.player.render(Settings.surface, Settings.camera.position, delta=dt)
+            level.player.render(Settings.surface, Settings.camera.position, delta=_dt)
             for enemy in level.enemies:
-                enemy.render(Settings.surface, Settings.camera.position, delta=dt)
+                enemy.render(Settings.surface, Settings.camera.position, delta=_dt)
 
             # Render frontground before gui
             level.render_infront(dt, Settings.surface, Settings.camera.position)

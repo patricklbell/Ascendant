@@ -277,42 +277,6 @@ class Player(Sprite.AnimatedSprite):
                 self.jump_add_time += delta
                 self.velocity.y += delta * self.jump_add_speed
 
-        
-        # Check for damage events
-        if not damage_colliders == None and self.iframes == 0 and not self.animation_name == "death":
-            collision = self.collider.collidelist(damage_colliders)
-            if not collision == -1:
-                level_state_changes["hit"] = True
-                self.iframes = self.iframe_length
-                self.play_animation("damage")
-                self.hearts -= 1
-                
-                # Apply knockback
-                s = pygame.Vector2(
-                    damage_colliders[collision].left+damage_colliders[collision].width/2, 
-                    damage_colliders[collision].top+damage_colliders[collision].height/2,
-                ) - (self.position + self.collider_offset + self.collider_size/2)
-                self.velocity.x = self.velocity.x + self.damage_knockback_speed*(int(s.x < 0)*2 - 1)
-                self.velocity.y = self.velocity.y + self.damage_knockback_speed*(int(s.y < 0)*2 - 1)
-
-
-        # Check for death events
-        if not death_colliders == None and not self.animation_name == "death":
-            collision = self.collider.collidelist(death_colliders)
-            if not collision == -1:
-                self.hearts -= 1
-                level_state_changes["reset"] = True
-
-        if self.hearts == 0 and not self.animation_name == "death":
-            level_state_changes["respawn"] = True
-        
-        # Check for save possibility
-        self.can_save = False
-        if not save_colliders == None:
-            collision = self.collider.collidelist(save_colliders)
-            if not collision == -1:
-                self.can_save = True
-
         old_position = copy.deepcopy(self.position)
         self.position += (self.velocity + self.constant_velocity) * delta
 
@@ -381,6 +345,41 @@ class Player(Sprite.AnimatedSprite):
                             self.velocity.y = 0
         else:
             self.is_on_ground = False
+
+        # Check for damage events
+        if not damage_colliders == None and self.iframes == 0 and not self.animation_name == "death":
+            collision = self.collider.collidelist(damage_colliders)
+            if not collision == -1:
+                level_state_changes["hit"] = True
+                self.iframes = self.iframe_length
+                self.play_animation("damage")
+                self.hearts -= 1
+                
+                # Apply knockback
+                s = pygame.Vector2(
+                    damage_colliders[collision].left+damage_colliders[collision].width/2, 
+                    damage_colliders[collision].top+damage_colliders[collision].height/2,
+                ) - (self.position + self.collider_offset + self.collider_size/2)
+                self.velocity.x = self.velocity.x + self.damage_knockback_speed*(int(s.x < 0)*2 - 1)
+                self.velocity.y = self.velocity.y + self.damage_knockback_speed*(int(s.y < 0)*2 - 1)
+
+
+        # Check for death events
+        if not death_colliders == None and not self.animation_name == "death":
+            collision = self.collider.collidelist(death_colliders)
+            if not collision == -1:
+                self.hearts -= 1
+                level_state_changes["reset"] = True
+
+        if self.hearts == 0 and not self.animation_name == "death":
+            level_state_changes["respawn"] = True
+        
+        # Check for save possibility
+        self.can_save = False
+        if not save_colliders == None:
+            collision = self.collider.collidelist(save_colliders)
+            if not collision == -1:
+                self.can_save = True
 
         # Create dust trails
         if self.is_on_ground and abs((self.position - old_position).x) > 1:
@@ -521,18 +520,19 @@ class Player(Sprite.AnimatedSprite):
                             self.play_animation("unsit")
                     else:
                         self.key_state["attack"] = True    
-                        if self.key_state["down"] and not self.is_on_ground and (not self.animation_name == "death"):
-                            if not (self.animation_name == "attack2" and self.animation_playing):
-                                self.play_animation("attack2", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
-                                Settings.SOUND_EFFECTS["big_attack"].Play(fade_in_ms=200)
-                        elif self.key_state["up"]:
-                            if not (self.animation_name == "attack1" and self.animation_playing):
-                                self.play_animation("attack1", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
-                                Settings.SOUND_EFFECTS["big_attack"].Play(fade_in_ms=200)
-                        else:
-                            if not (self.animation_name == "attack0" and self.animation_playing):
-                                self.play_animation("attack0", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
-                                Settings.SOUND_EFFECTS["attack"].Play(fade_in_ms=200)
+                        if not self.animation_name == "death":
+                            if self.key_state["down"] and not self.is_on_ground and (not self.animation_name == "death"):
+                                if not (self.animation_name == "attack2" and self.animation_playing):
+                                    self.play_animation("attack2", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
+                                    Settings.SOUND_EFFECTS["big_attack"].Play(fade_in_ms=200)
+                            elif self.key_state["up"]:
+                                if not (self.animation_name == "attack1" and self.animation_playing):
+                                    self.play_animation("attack1", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
+                                    Settings.SOUND_EFFECTS["big_attack"].Play(fade_in_ms=200)
+                            else:
+                                if not (self.animation_name == "attack0" and self.animation_playing):
+                                    self.play_animation("attack0", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
+                                    Settings.SOUND_EFFECTS["attack"].Play(fade_in_ms=200)
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]): 
                     if self.animation_name == "sit":
                         self.play_animation("unsit")

@@ -1,4 +1,7 @@
 import pygame, json, copy, random
+from pygame.rect import Rect
+
+from pygame.version import PygameVersion
 
 from Packages.Extern import SoundPlayer
 from Packages import Settings, Sprite, Enemy, Player, Water
@@ -13,8 +16,9 @@ class Particle():
     def render(self, surface, offset, delta=None):
         if not delta == None:
             self.update_position(delta)
-        surface.set_at([int(self.position.x+offset.x), int(self.position.y+offset.y)], self.color)
-        return [pygame.Rect(int(self.position.x+offset.x)-2, int(self.position.y+offset.y)-2, 5, 5)]
+        rect = pygame.Rect(int(self.position.x+offset.x), int(self.position.y+offset.y), 2, 2) 
+        surface.fill(self.color, rect)
+        return [rect.inflate_ip(2, 2)]
 
 class Level():
     def __init__(self, should_load=True, level_num=0, save_num=0, position=pygame.Vector2(0,0), player_base=Player.Player(), water_base=Water.Water(), enemy_base=Enemy.Enemy(), flying_enemy_base=Enemy.FlyingEnemy()):
@@ -33,7 +37,10 @@ class Level():
         self.colliders, self.damage_colliders, self.hitable_colliders, self.transitions, self.waters, self.water_colliders, self.enemies = [],[],[],[],[],[],[]
         self.player = player_base.copy()
         self.particles = []
-        self.colors = [pygame.Color(33, 48, 34), pygame.Color(30,30,30), pygame.Color(69, 61, 51), pygame.Color(199,199,199)]
+        self.colors = [pygame.Color(0, 0, 0)]
+        self.particles_likelihood = 0
+        self.particles_min_velocity = [0,0]
+        self.particles_max_velocity = [0,0]
         self.level_size = [0,0]
 
 
@@ -84,15 +91,18 @@ class Level():
         dirty_rects = []
 
         # Handle particles
-        if random.randint(0, 20) == 0:
+        if random.uniform(0, 1) < self.particles_likelihood and len(self.particles) < self.particles_max:
             self.particles += [Particle(
                 pygame.Vector2(0, random.randint(0, self.level_size[1])),
-                pygame.Vector2(random.uniform(20, 100),random.uniform(-2, 2)),
+                pygame.Vector2(
+                    random.uniform(self.particles_min_velocity[0], self.particles_max_velocity[0]),
+                    random.uniform(self.particles_min_velocity[1], self.particles_max_velocity[1])
+                ),
                 random.choice(self.colors),
             )]
         i=0
         while i < len(self.particles):
-            if self.particles[i].position.x > self.level_size[0]:
+            if self.particles[i].position.x < 0 or self.particles[i].position.x > self.level_size[0] or self.particles[i].position.y < 0 or self.particles[i].position.y > self.level_size[1]:
                 del self.particles[i]
             else:
                 dirty_rects += self.particles[i].render(surface, offset, delta)
@@ -167,7 +177,30 @@ class Level():
                     "parallax": pygame.Vector2(image_layer["parallaxX"],image_layer["parallaxY"])   
                 })
         self.level_size = [self.sprites_behind[0]["sprite"].image.get_width(), self.sprites_behind[0]["sprite"].image.get_height()]
+
+        if "particles" in level_json_data:
+            self.particles_max_velocity = level_json_data["particles"]["max_velocity"]
+            self.particles_min_velocity = level_json_data["particles"]["min_velocity"]
+            self.particles_likelihood   = level_json_data["particles"]["likelihood"]
+            self.particles_max          = level_json_data["particles"]["max"]
+            self.colors = []
+            for color in level_json_data["particles"]["colors"]:
+                self.colors.append(pygame.Color(*color))
             
+            # Randomize intial particles
+            self.particles = []
+            for i in range(self.particles_max):
+                self.particles += [Particle(
+                    pygame.Vector2(random.randint(0, self.level_size[0]), random.randint(0, self.level_size[1])),
+                    pygame.Vector2(
+                        random.uniform(self.particles_min_velocity[0], self.particles_max_velocity[0]),
+                        random.uniform(self.particles_min_velocity[1], self.particles_max_velocity[1])
+                    ),
+                    random.choice(self.colors),
+                )]
+        elif Settings.DEBUG:
+            print("No particles data found in", self.level_filename)
+
         self.entities_filename = f"{Settings.SRC_DIRECTORY}Levels/Level{self.level_num}/{level_json_data['entities']['filename']}"
         with open(self.entities_filename) as json_file:
             json_data = json.load(json_file)
