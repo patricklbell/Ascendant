@@ -1,13 +1,14 @@
-import os, sys, warnings, pickle
+import os, sys, warnings, pickle, copy
 from typing import Set
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 warnings.simplefilter('ignore')
 import pygame, json, pygame_gui
-from Packages import  Settings, Sprite, Level, Camera, Player, Enemy, Gui, Water
+from Packages import  Settings, Sprite, Level, Camera, Player, Enemy, Gui, Water, Console
+from Packages.Extern.pygame_console import game_console
 
 level = None
 def init():
-    global level
+    global level, debug_console
     Settings.init()
     level = Level.Level(
         should_load=False,
@@ -37,8 +38,8 @@ def init():
             calculate_white=True,
             water_splash_json_filename=Settings.SRC_DIRECTORY + "Entities/Water/splash.json",
             water_big_splash_json_filename=Settings.SRC_DIRECTORY + "Entities/Water/big_splash.json",
-            short_stop_json_filename=Settings.SRC_DIRECTORY + "Entities/player/short_stop.json",
-            hard_stop_json_filename=Settings.SRC_DIRECTORY + "Entities/player/hard_stop.json",
+            short_stop_json_filename=Settings.SRC_DIRECTORY + "Entities/Player/short_stop01.json",
+            hard_stop_json_filename=Settings.SRC_DIRECTORY + "Entities/Player/hard_stop01.json",
             transition_frames=30,
             sound_json_filename=Settings.SRC_DIRECTORY + "Sound/Player/sounds.json"
         ),
@@ -69,8 +70,16 @@ def init():
             water_bubbly_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbly.json",
             water_bubbliest_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbliest.json",
             spritesheet_scale=(0.6,0.6),
+        ),
+        toxic_water_base=Water.Water(
+            waterbase_json_filename=Settings.SRC_DIRECTORY+"Entities/Toxic_Water/waterbase_tileset.json",
+            water_json_filename=Settings.SRC_DIRECTORY+"Entities/Toxic_Water/water.json",
+            water_bubbly_json_filename=Settings.SRC_DIRECTORY+"Entities/Toxic_Water/water_bubbly.json",
+            water_bubbliest_json_filename=Settings.SRC_DIRECTORY+"Entities/Toxic_Water/water_bubbliest.json",
+            spritesheet_scale=(0.6,0.6),
         )
     )
+    debug_console = Console.Console(Settings.true_surface, level)
     return 1
 
 def gameloop():
@@ -92,8 +101,11 @@ def gameloop():
                 if event.key == pygame.K_TAB: 
                     Settings.DEBUG = not Settings.DEBUG
                     print("Debug mode", ["off", "on"][Settings.DEBUG])
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_BACKQUOTE: 
+                    debug_console.console.toggle()
 
-            if event.type == pygame.QUIT:
+            elif event.type == pygame.QUIT:
                 if not is_title:
                     level.save_game()
                 return
@@ -110,9 +122,19 @@ def gameloop():
 
             Settings.gui_manager.process_events(event)
         Settings.gui_manager.update(dt)
+        if debug_console.console.enabled:
+            debug_console.console.update(events)
 
         prev_title = is_title
         is_running, is_paused, is_title, save, restart = Settings.gui.handle_events(events)
+
+        is_dialog = False
+        for dialog in level.dialog_boxes:
+            is_dialog = is_dialog or dialog.update(level, level.player.collider)
+            dialog.process_events(events)
+            
+        is_paused = is_paused or debug_console.console.enabled
+
         if restart:
             return 1
         if prev_title == True and is_title == False:
@@ -152,7 +174,7 @@ def gameloop():
                 if hit_occured:
                     damage_freeze = 3
 
-                state_changes = level.player.physics_process(1/60, physical_colliders, damage_colliders, level.get_damage_colliders(), level.get_hitable_colliders(), level.get_save_colliders(), level.get_water_colliders(), level.transitions, hit_occured)
+                state_changes = level.player.physics_process(1/60, physical_colliders, damage_colliders, level.get_hitable_colliders(), level.get_death_colliders(), level.get_save_colliders(), level.get_water_colliders(), level.transitions, hit_occured, not is_dialog)
                 if state_changes["respawn"]:
                     def end_animation(self):
                         level.load_level(level_num=level.save_level)
@@ -165,14 +187,16 @@ def gameloop():
                     transition_frames = Settings.TRANSITION_MAX_FRAMES
                 elif state_changes["hit"]:
                     damage_freeze = 8
-                
-                should_save = level.player.input(events)
-                if should_save:
-                    Settings.gui.save_animation.play_animation("base")
-                    level.player.hearts = Settings.PLAYER_HEARTS
-                    level.save_level = level.level_num
-                    level.save_game()
-                
+                if not is_dialog:
+                    should_save = level.player.input(events)
+                    if should_save:
+                        Settings.gui.save_animation.play_animation("base")
+                        level.player.hearts = Settings.PLAYER_HEARTS
+                        level.save_level = level.level_num
+                        level.save_dialog_completion = copy.deepcopy(level.dialog_completion)
+                        level.save_game()
+                else:
+                    level.player.input_static(events)
 
                 Settings.camera.update_position(dt, level.player.position, Settings.surface)
                 _dt = dt
@@ -224,6 +248,7 @@ def gameloop():
 
         # Scale to true display
         Settings.true_surface.blit(pygame.transform.scale(Settings.surface, Settings.true_surface.get_rect().size), (0, 0))
+        debug_console.console.show(Settings.true_surface)
 
         pygame.display.update()
     return 0

@@ -1,0 +1,16 @@
+{
+    "filename":"Entities/Player/short_stop.png",
+    "animations":[
+        {
+            "name":"loop",
+            "x_init_offset":0,
+            "y_init_offset":0,
+            "x_size":36,
+            "y_size":14,
+            "x_offset":36,
+            "y_offset":0,
+            "time":0.300,
+            "frame_length":5
+        }
+    ]
+}

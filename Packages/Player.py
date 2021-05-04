@@ -4,6 +4,7 @@ from Packages.Extern import SoundPlayer
 from Packages import Settings, Sprite
 
 class Player(Sprite.AnimatedSprite):
+    """ """
     def __init__(self, *args, **kwargs):
         Sprite.AnimatedSprite.__init__(self, *args, **kwargs)
 
@@ -86,6 +87,7 @@ class Player(Sprite.AnimatedSprite):
             self.play_animation("idle", loop=True)
 
     def get_attack_colliders(self):
+        """ """
         if self.can_attack and self.animation_playing:
             if self.animation_name == "attack0" and self.frame_num >= 5:
                 inflated = self.collider.inflate(self.attack0_length, self.attack0_width)
@@ -100,6 +102,13 @@ class Player(Sprite.AnimatedSprite):
                 return [inflated.move(0, self.attack1_length/2 +self.collider_size.y/2)]
 
     def render_colliders(self, delta, surface, offset):
+        """
+
+        :param delta: 
+        :param surface: 
+        :param offset: 
+
+        """
         dirty_rects = []
 
         collider = self.collider.move(offset)
@@ -130,7 +139,21 @@ class Player(Sprite.AnimatedSprite):
                 dirty_rects.append(attack_collider)
         return dirty_rects
 
-    def physics_process(self, delta, colliders = None, damage_colliders=None, hitable_colliders=None, death_colliders=None, save_colliders=None, water_colliders=None, transitions=None, hit_occured=False):
+    def physics_process(self, delta, colliders = None, damage_colliders=None, hitable_colliders=None, death_colliders=None, save_colliders=None, water_colliders=None, transitions=None, hit_occured=False, allow_movement=True):
+        """
+
+        :param delta: 
+        :param colliders:  (Default value = None)
+        :param damage_colliders:  (Default value = None)
+        :param hitable_colliders:  (Default value = None)
+        :param death_colliders:  (Default value = None)
+        :param save_colliders:  (Default value = None)
+        :param water_colliders:  (Default value = None)
+        :param transitions:  (Default value = None)
+        :param hit_occured:  (Default value = False)
+        :param allow_movement: (Defulat value = True)
+
+        """
         level_state_changes = {"reset":False, "transition":None, "respawn":False, "hit":False}
 
         # Dust states
@@ -220,7 +243,7 @@ class Player(Sprite.AnimatedSprite):
                 if flash_distribution[int(((self.iframe_length - self.iframes) / self.iframe_length)*(len(flash_distribution)-1))]:
                     self.is_white = True
 
-            if not (self.animation_name == "sit" or self.animation_name == "unsit" or self.animation_name == "death") or (self.animation_finished and not self.animation_name == "sit"):
+            if (not (self.animation_name == "sit" or self.animation_name == "unsit" or self.animation_name == "death") or (self.animation_finished and not self.animation_name == "sit")) and allow_movement:
                 if not self.key_state["left"] == self.key_state["right"]:
                     if self.key_state["right"]:
                         self.flipX = False
@@ -256,6 +279,8 @@ class Player(Sprite.AnimatedSprite):
                         self.play_animation("idle", loop=True)     
             else:
                 self.constant_velocity.x = 0       
+                if (not allow_movement) and (self.animation_name == "walk" or not self.animation_playing):
+                    self.play_animation("idle", loop=True)     
 
             # Apply forces
             if not self.velocity == pygame.Vector2(0,0):
@@ -466,6 +491,11 @@ class Player(Sprite.AnimatedSprite):
         return level_state_changes
 
     def update_animation(self, delta):
+        """
+
+        :param delta: 
+
+        """
         super().update_animation(delta)
 
         self.water_big_splash.update_animation(delta)
@@ -476,6 +506,14 @@ class Player(Sprite.AnimatedSprite):
         self.hard_stop1.update_animation(delta)
 
     def render(self, surface, offset=pygame.Vector2(0,0), size=None, delta=None):
+        """
+
+        :param surface: 
+        :param offset:  (Default value = pygame.Vector2(0, 0)
+        :param size:  (Default value = None)
+        :param delta:  (Default value = None)
+
+        """
         if not delta == None:
             self.update_animation(delta)
         dirty_rects = super().render(surface, offset, size)
@@ -490,8 +528,14 @@ class Player(Sprite.AnimatedSprite):
         return dirty_rects
 
     def input(self, events):
+        """
+
+        :param events: 
+
+        """
         save = False
         def reenable_attack(self):
+            """ """
             self.can_attack = True
         for event in events:
             if event.type == pygame.KEYDOWN:
@@ -562,6 +606,11 @@ class Player(Sprite.AnimatedSprite):
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]): self.key_state["left"] = False
         return save
     def input_static(self, events):
+        """
+
+        :param events: 
+
+        """
         for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]): self.key_state["jump"] = True
@@ -578,6 +627,7 @@ class Player(Sprite.AnimatedSprite):
 
     # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
     def copy(self):
+        """ """
         copyobj = Player()
         for name, attr in self.__dict__.items():
             if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):

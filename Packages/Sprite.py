@@ -4,6 +4,7 @@ import pygame, json, copy
 from Packages import Settings
 
 class ImageSprite():
+    """ """
     def __init__(self, image_filename=None,scale=None):
         self.hidden=False
         if not image_filename == None:
@@ -16,17 +17,28 @@ class ImageSprite():
             self.image = pygame.transform.scale(self.image, (int(scale[0]*self.image.get_width()), int(scale[1]*self.image.get_height())))
     
     def render(self, surface, position=pygame.Vector2(0,0), size=None):
+        """
+
+        :param surface: 
+        :param position:  (Default value = pygame.Vector2(0)
+        :param 0): 
+        :param size:  (Default value = None)
+
+        """
         if not self.hidden:
             if size == None: 
                 return [surface.blit(self.image, position)]
             else:
                 return [surface.blit(self.image, position, area=size)]
     def hide(self):
+        """ """
         self.hidden = True
     def show(self):
+        """ """
         self.hidden = False
     # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
     def copy(self):
+        """ """
         copyobj = ImageSprite()
         for name, attr in self.__dict__.items():
             if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):
@@ -36,12 +48,19 @@ class ImageSprite():
         return copyobj
 
 class ImageSpriteSheet():
+    """ """
     def __init__(self, spritesheet_json_filename=None, spritesheet_scale=(1,1)):
         self.images = {}
         if not spritesheet_json_filename == None:
             self.load_spritesheet(spritesheet_json_filename, spritesheet_scale)
 
     def load_spritesheet(self, spritesheet_json_filename, scale):
+        """
+
+        :param spritesheet_json_filename: 
+        :param scale: 
+
+        """
         with open(spritesheet_json_filename) as json_file:
             json_data = json.load(json_file)
 
@@ -64,6 +83,15 @@ class ImageSpriteSheet():
             self.images[name] = image
 
     def render(self, surface, image_name, position=pygame.Vector2(0,0), size=None):
+        """
+
+        :param surface: 
+        :param image_name: 
+        :param position:  (Default value = pygame.Vector2(0)
+        :param 0): 
+        :param size:  (Default value = None)
+
+        """
         if size == None: 
             return [surface.blit(self.images[image_name], position)]
         else:
@@ -71,6 +99,7 @@ class ImageSpriteSheet():
 
     # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
     def copy(self):
+        """ """
         copyobj = ImageSpriteSheet()
         for name, attr in self.__dict__.items():
             if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):
@@ -81,11 +110,8 @@ class ImageSpriteSheet():
 
 
 class AnimatedSprite():
-    """
-    Base class for player
-    """
+    """ """
     def __init__(self, position = pygame.Vector2(0, 0), spritesheet_json_filename = None, spritesheet_scale=(1,1), calculate_flip=False, calculate_white=False, *args, **kwargs):
-        # Setup animation
         self.hidden = False
         self.position = position
         self.animation_finished = False
@@ -107,10 +133,17 @@ class AnimatedSprite():
         if not spritesheet_json_filename == None:
             self.load_spritesheet(spritesheet_json_filename, spritesheet_scale, calculate_flip=calculate_flip, calculate_white=calculate_white)
     def hide(self):
+        """ """
         self.hidden = True
     def show(self):
+        """ """
         self.hidden = False
     def update_animation(self, delta):
+        """
+
+        :param delta: 
+
+        """
         current_animation = self.animations_data[self.animation_index]
 
         # Advance frame if animation is playing
@@ -133,6 +166,15 @@ class AnimatedSprite():
         self.frame_image = current_animation[frame_type][self.frame_num]
 
     def render(self, surface, offset=pygame.Vector2(0,0), size=None, delta=None):
+        """
+
+        :param surface: 
+        :param offset:  (Default value = pygame.Vector2(0)
+        :param 0): 
+        :param size:  (Default value = None)
+        :param delta:  (Default value = None)
+
+        """
         if not self.hidden:
             if not delta == None:
                 self.update_animation(delta)
@@ -149,6 +191,15 @@ class AnimatedSprite():
         return []
 
     def load_spritesheet(self, spritesheet_json_filename, scale=(1, 1), calculate_flip=False, calculate_white=False):
+        """
+
+        :param spritesheet_json_filename: 
+        :param scale:  (Default value = (1)
+        :param 1): 
+        :param calculate_flip:  (Default value = False)
+        :param calculate_white:  (Default value = False)
+
+        """
         "Loads set of animations from a spritesheet (png) and json"
 
         self.animations_data = []
@@ -208,6 +259,16 @@ class AnimatedSprite():
             self.animations_data.append(animation_data)
 
     def play_animation(self, animation_name="", speed=1, animation_time=0, loop=False, on_animation_end = lambda self: 1, on_animation_interrupt = lambda self: 1):
+        """
+
+        :param animation_name:  (Default value = "")
+        :param speed:  (Default value = 1)
+        :param animation_time:  (Default value = 0)
+        :param loop:  (Default value = False)
+        :param on_animation_end:  (Default value = lambda self: 1)
+        :param on_animation_interrupt:  (Default value = lambda self: 1)
+
+        """
         self.on_animation_interrupt(self)
         self.on_animation_interrupt = on_animation_interrupt
 
@@ -231,10 +292,12 @@ class AnimatedSprite():
         self.on_animation_end = on_animation_end
 
     def input(self):
+        """ """
         pass
     
     # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
     def copy(self):
+        """ """
         copyobj = AnimatedSprite()
         for name, attr in self.__dict__.items():
             if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):

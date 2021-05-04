@@ -4,6 +4,7 @@ from Packages import Settings, Sprite
 
 
 class Gui():
+    """ """
     def __init__(self, health_spritesheet_filename, health_sprite_filename, title_image_filename, title_background_filename, save_sprite_filename, save_animation_filename, state=None):
         self.focused = 0
 
@@ -48,9 +49,20 @@ class Gui():
         }
 
         vertical_gap, vertical_height = 40, 30
+        self.completions = []
+        for i in range(3):
+            save_filename = Settings.SAVE_FILETEMPLATE.substitute(num=str(i+1))
+            try:
+                with open(save_filename) as json_file:
+                    json_data = json.load(json_file)
+                self.completions.append(json_data["title_info"]["percentage_completion"])
+            except Exception as e:
+                if Settings.DEBUG:
+                    print(f"Failed to load save {save_filename}, error: ", e)
+                self.completions.append(0)
         self.select_save_gui = {
             "save1_label": pygame_gui.elements.UILabel(
-                text="SAVE 1:",
+                text=f"SAVE 1 ({self.completions[0]}%):",
                 object_id='#small_label',
                 relative_rect=pygame.Rect(
                     (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3), (200, vertical_height)),
@@ -65,7 +77,7 @@ class Gui():
                 starting_height=2,
             ),
             "save2_label": pygame_gui.elements.UILabel(
-                text="SAVE 2:",
+                text=f"SAVE 2 ({self.completions[1]}%):",
                 relative_rect=pygame.Rect(
                     (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3+vertical_gap), (200, vertical_height)),
                 object_id='#small_label',
@@ -80,7 +92,7 @@ class Gui():
                 starting_height=2,
             ),
             "save3_label": pygame_gui.elements.UILabel(
-                text="SAVE 3:",
+                text=f"SAVE 3 ({self.completions[2]}%):",
                 relative_rect=pygame.Rect(
                     (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3+vertical_gap*2), (200, vertical_height)),
                 object_id='#small_label',
@@ -118,19 +130,19 @@ class Gui():
                 text="CONTROLS",
                 object_id='#center_label',
                 relative_rect=pygame.Rect(
-                    (0, Settings.RESOLUTION[1]/6), (Settings.RESOLUTION[0], vertical_height)),
+                    (0, Settings.RESOLUTION[1]/8), (Settings.RESOLUTION[0], vertical_height)),
                 manager=Settings.gui_manager
             ),
             "attack_label": pygame_gui.elements.UILabel(
                 text="ATTACK",
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/6+vertical_gap), (200, vertical_height)),
+                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/8+vertical_gap), (200, vertical_height)),
                 object_id='#small_label',
                 manager=Settings.gui_manager
             ),
             "attack": pygame_gui.elements.UIButton(starting_height=2,
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/6+vertical_gap), (100, vertical_height)),
+                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/8+vertical_gap), (100, vertical_height)),
                 text=Settings.USER_SETTINGS["bindings"]["attack"].upper(),
                 object_id='#small_button',
                 manager=Settings.gui_manager
@@ -138,13 +150,13 @@ class Gui():
             "jump_label": pygame_gui.elements.UILabel(
                 text="JUMP",
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/6+vertical_gap*2), (200, vertical_height)),
+                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/8+vertical_gap*2), (200, vertical_height)),
                 object_id='#small_label',
                 manager=Settings.gui_manager
             ),
             "jump": pygame_gui.elements.UIButton(starting_height=2,
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/6+vertical_gap*2), (100, vertical_height)),
+                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/8+vertical_gap*2), (100, vertical_height)),
                 text=Settings.USER_SETTINGS["bindings"]["jump"].upper(),
                 object_id='#small_button',
                 manager=Settings.gui_manager
@@ -152,13 +164,13 @@ class Gui():
             "left_label": pygame_gui.elements.UILabel(
                 text="LEFT",
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/6+vertical_gap*3), (200, vertical_height)),
+                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/8+vertical_gap*3), (200, vertical_height)),
                 object_id='#small_label',
                 manager=Settings.gui_manager
             ),
             "left": pygame_gui.elements.UIButton(starting_height=2,
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/6+vertical_gap*3), (100, vertical_height)),
+                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/8+vertical_gap*3), (100, vertical_height)),
                 text=Settings.USER_SETTINGS["bindings"]["left"].upper(),
                 object_id='#small_button',
                 manager=Settings.gui_manager
@@ -166,13 +178,13 @@ class Gui():
             "right_label": pygame_gui.elements.UILabel(
                 text="RIGHT",
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/6+vertical_gap*4), (200, vertical_height)),
+                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/8+vertical_gap*4), (200, vertical_height)),
                 object_id='#small_label',
                 manager=Settings.gui_manager
             ),
             "right": pygame_gui.elements.UIButton(starting_height=2,
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/6+vertical_gap*4), (100, vertical_height)),
+                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/8+vertical_gap*4), (100, vertical_height)),
                 text=Settings.USER_SETTINGS["bindings"]["right"].upper(),
                 object_id='#small_button',
                 manager=Settings.gui_manager
@@ -180,13 +192,13 @@ class Gui():
             "up_label": pygame_gui.elements.UILabel(
                 text="UP",
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/6+vertical_gap*5), (200, vertical_height)),
+                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/8+vertical_gap*5), (200, vertical_height)),
                 object_id='#small_label',
                 manager=Settings.gui_manager
             ),
             "up": pygame_gui.elements.UIButton(starting_height=2,
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/6+vertical_gap*5), (100, vertical_height)),
+                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/8+vertical_gap*5), (100, vertical_height)),
                 text=Settings.USER_SETTINGS["bindings"]["up"].upper(),
                 object_id='#small_button',
                 manager=Settings.gui_manager
@@ -194,26 +206,38 @@ class Gui():
             "down_label": pygame_gui.elements.UILabel(
                 text="DOWN",
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/6+vertical_gap*6), (200, vertical_height)),
+                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/8+vertical_gap*6), (200, vertical_height)),
                 object_id='#small_label',
                 manager=Settings.gui_manager
             ),
             "down": pygame_gui.elements.UIButton(starting_height=2,
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/6+vertical_gap*6), (100, vertical_height)),
+                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/8+vertical_gap*6), (100, vertical_height)),
                 text=Settings.USER_SETTINGS["bindings"]["down"].upper(),
+                object_id='#small_button',
+                manager=Settings.gui_manager
+            ),
+            "dialog_label": pygame_gui.elements.UILabel(
+                text="DIALOG",
+                relative_rect=pygame.Rect(
+                    (Settings.RESOLUTION[0]/2-250, Settings.RESOLUTION[1]/8+vertical_gap*7), (200, vertical_height)),
+                object_id='#small_label',
+                manager=Settings.gui_manager
+            ),
+            "dialog": pygame_gui.elements.UIButton(starting_height=2,
+                relative_rect=pygame.Rect(
+                    (Settings.RESOLUTION[0]/2+100, Settings.RESOLUTION[1]/8+vertical_gap*7), (100, vertical_height)),
+                text=Settings.USER_SETTINGS["bindings"]["dialog"].upper(),
                 object_id='#small_button',
                 manager=Settings.gui_manager
             ),
             "save": pygame_gui.elements.UIButton(starting_height=2,
                 relative_rect=pygame.Rect(
-                    (Settings.RESOLUTION[0]/2-150, Settings.RESOLUTION[1]*8/9-25), (200, 50)),
+                    (Settings.RESOLUTION[0]/2-170, Settings.RESOLUTION[1]*8/9-25), (200, 50)),
                 text="SAVE",
                 manager=Settings.gui_manager
             ),
         }
-        self.settings_focus = ["fullscreen", "attack",
-                               "jump", "left", "right", "up", "down", "save"]
         
         self.title_settings_gui = {
             "fullscreen_label": pygame_gui.elements.UILabel(
@@ -295,8 +319,6 @@ class Gui():
                 manager=Settings.gui_manager
             ),
         }
-        self.title_settings_focus = ["fullscreen", "attack",
-                               "jump", "left", "right", "up", "down", "save"]
 
         self.binding_gui = {
             "panel": pygame_gui.elements.UIPanel(relative_rect=pygame.Rect((0, 0), Settings.RESOLUTION), starting_layer_height=1, manager=Settings.gui_manager),
@@ -327,6 +349,14 @@ class Gui():
         self.save_animation = Sprite.AnimatedSprite(spritesheet_json_filename=save_animation_filename, position=pygame.Vector2(0, Settings.RESOLUTION[1]-64))
 
     def render_ingame(self, delta, surface, player, offset=pygame.Vector2(0, 0)):
+        """
+
+        :param delta: 
+        :param surface: 
+        :param player: 
+        :param offset:  (Default value = pygame.Vector2(0,0))
+
+        """
         dirty_rects = []
 
         health_fraction = (player.hearts-1) / (Settings.PLAYER_HEARTS-1)
@@ -350,37 +380,13 @@ class Gui():
         return dirty_rects
 
     def handle_events(self, events):
+        """
+
+        :param events: 
+
+        """
         running, selected_save, restart = True, None, False
         for event in events:
-            # if event.type == pygame.MOUSEMOTION:
-            #     if self.state == "settings":
-            #         prev_index = self.focused
-            #         for key in self.settings_focus:
-            #             print(self.settings_gui[key].is_selected)
-            #             if self.settings_gui[key].is_selected:
-            #                 index = self.settings_focus.index(key)
-            #                 if not index == prev_index:
-            #                     print("selected")
-            #                     self.focused = index
-
-            #         for i in range(len(self.settings_focus)):
-            #             self.settings_gui[self.settings_focus[i]].unselect()
-
-            #         self.settings_gui[self.settings_focus[self.focused]].select()
-            #     elif self.state == "paused":
-            #         prev_index = self.focused
-            #         for key in self.paused_focus:
-            #             print(self.paused_gui[key].is_selected)
-            #             if self.paused_gui[key].is_selected:
-            #                 index = self.paused_focus.index(key)
-            #                 if not index == prev_index:
-            #                     print("selected")
-            #                     self.focused = index
-
-            #         for i in range(len(self.paused_focus)):
-            #             self.paused_gui[self.paused_focus[i]].unselect()
-
-            #         self.paused_gui[self.paused_focus[self.focused]].select()
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.paused_gui["resume"]:
@@ -475,6 +481,9 @@ class Gui():
                     elif event.ui_element == self.settings_gui["down"] and not self.state == "binding":
                         self.set_state(settings=True, binding=True)
                         self.to_bind_key = "down"
+                    elif event.ui_element == self.settings_gui["dialog"] and not self.state == "binding":
+                        self.set_state(settings=True, binding=True)
+                        self.to_bind_key = "dialog"
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -530,9 +539,27 @@ class Gui():
         return (running, not self.state == "none", self.state == "title" or self.state == "select_save" or self.state=="title_settings", selected_save, restart)
 
     def render(self, surface, offset, delta):
-        self.title_background.render(surface, pygame.Vector2(0,0), delta=delta)
+        """
+
+        :param surface: 
+        :param offset: 
+        :param delta: 
+
+        """
+        if self.state == "title" or self.state == "select_save" or self.state == "title_settings":
+            self.title_background.render(surface, pygame.Vector2(0,0), delta=delta)
 
     def set_state(self, pause=False, settings=False, binding=False, title=False, select_save=False, title_settings=False):
+        """
+
+        :param pause:  (Default value = False)
+        :param settings:  (Default value = False)
+        :param binding:  (Default value = False)
+        :param title:  (Default value = False)
+        :param select_save:  (Default value = False)
+        :param title_settings:  (Default value = False)
+
+        """
         self.state = [False, "select_save"][select_save] or [False, "title"][title] or [
             False, "binding"][binding] or [False, "settings"][settings] or [False, "paused"][pause] or [False, "title_settings"][title_settings]
         if self.state == False:

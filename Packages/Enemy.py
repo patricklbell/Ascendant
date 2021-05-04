@@ -4,6 +4,7 @@ import pygame, json, itertools, copy, random
 from Packages import Settings, Sprite
 
 class Enemy(Sprite.AnimatedSprite):
+    """ """
     def __init__(self, *args, **kwargs):
         Sprite.AnimatedSprite.__init__(self, *args, **kwargs)
 
@@ -51,6 +52,13 @@ class Enemy(Sprite.AnimatedSprite):
             self.play_animation("walk", loop=True)
 
     def render_colliders(self, delta, surface, offset):
+        """
+
+        :param delta: 
+        :param surface: 
+        :param offset: 
+
+        """
         dirty_rects = []
 
         collider = self.collider.move(offset)
@@ -69,6 +77,12 @@ class Enemy(Sprite.AnimatedSprite):
         return dirty_rects
 
     def update_state(self, player_position=None, state=None):
+        """
+
+        :param player_position:  (Default value = None)
+        :param state:  (Default value = None)
+
+        """
         if not state == None:
             self.state = state
         elif not player_position == None and not self.state == "attack" and not self.state == "wait" and not self.state == "death" and not self.state == "dead":
@@ -80,6 +94,7 @@ class Enemy(Sprite.AnimatedSprite):
                 else:
                     if player_distance < self.attack_distance and ((player_position.y >= self.position.y) and (player_position.y <= self.position.y+self.collider_size.y)):
                         def handle_stab_end(self):
+                            """ """
                             self.state = "wait"
                             self.attack_gap_time = 0
                         self.play_animation("stab", on_animation_end=handle_stab_end)
@@ -91,6 +106,14 @@ class Enemy(Sprite.AnimatedSprite):
                 self.play_animation("unlevel_spear", on_animation_end=lambda self: self.play_animation("walk", loop=True))
 
     def physics_process(self, delta, colliders = None, player_position=None, attack_colliders=None):
+        """
+
+        :param delta: 
+        :param colliders:  (Default value = None)
+        :param player_position:  (Default value = None)
+        :param attack_colliders:  (Default value = None)
+
+        """
         if self.attack_gap_time < self.attack_gap:
             self.attack_gap_time += delta
             if self.attack_gap_time >= self.attack_gap:
@@ -165,6 +188,7 @@ class Enemy(Sprite.AnimatedSprite):
         
                     
     def get_damage_colliders(self):
+        """ """
         colliders = [self.collider]
         if self.state == "attack" and (self.frame_num >= 2 and self.frame_num <= 5):
             if self.flipX:
@@ -176,6 +200,7 @@ class Enemy(Sprite.AnimatedSprite):
     
     # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
     def copy(self):
+        """ """
         copyobj = Enemy()
         for name, attr in self.__dict__.items():
             if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):
@@ -186,6 +211,7 @@ class Enemy(Sprite.AnimatedSprite):
         return copyobj
 
 class FlyingEnemy(Sprite.AnimatedSprite):
+    """ """
     def __init__(self, *args, **kwargs):
         Sprite.AnimatedSprite.__init__(self, *args, **kwargs)
 
@@ -213,6 +239,13 @@ class FlyingEnemy(Sprite.AnimatedSprite):
             self.play_animation("fly", loop=True)
 
     def render_colliders(self, delta, surface, offset):
+        """
+
+        :param delta: 
+        :param surface: 
+        :param offset: 
+
+        """
         dirty_rects = []
 
         collider = self.collider.move(offset)
@@ -222,9 +255,23 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         return dirty_rects
 
     def update_state(self, player_position=None, state=None):
+        """
+
+        :param player_position:  (Default value = None)
+        :param state:  (Default value = None)
+
+        """
         pass
 
     def physics_process(self, delta, colliders = None, player_position=None, attack_colliders=None):
+        """
+
+        :param delta: 
+        :param colliders:  (Default value = None)
+        :param player_position:  (Default value = None)
+        :param attack_colliders:  (Default value = None)
+
+        """
         self.flipX = self.velocity.x < 0
 
         rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100) / 100
@@ -254,9 +301,11 @@ class FlyingEnemy(Sprite.AnimatedSprite):
             collision = generous_collider.collidelist(attack_colliders)
             if not collision == -1:
                 def end_revive(self):
+                    """ """
                     self.state = "alive"
                     self.play_animation("fly", loop=True)
                 def revive(self):
+                    """ """
                     self.play_animation("revive", on_animation_end=end_revive)
                 
                 self.play_animation("death", on_animation_end=revive)
@@ -298,12 +347,14 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         return is_damaged
                     
     def get_damage_colliders(self):
+        """ """
         if self.state == "alive":
             return [self.collider]
         return []
     
     # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
     def copy(self):
+        """ """
         copyobj = FlyingEnemy()
         for name, attr in self.__dict__.items():
             if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):

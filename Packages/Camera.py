@@ -1,7 +1,16 @@
 import pygame, copy
 
 class Camera():
+    """ """
     def __init__(self, position=pygame.Vector2(0,0), max_move_speed=10, min_move_speed=1, max_offset=pygame.Vector2(0.1, 0.1), contraints_max=pygame.Vector2(2880, 300), contraints_min=pygame.Vector2(0, 0)):
+        """
+        
+        :param position: (Default value = pygame.Vector2(0,0))
+        :param max_move_speed: (Default value = 10) pixels per update call
+        :param min_move_speed: (Default value = 1) pixels per update call
+        :param max_offset: (Default value = pygame.Vector2(0.1, 0.1)) float representing percentage screen size
+        :param 
+        """
         self.position = position
         self.contraints_max = contraints_max
         self.contraints_min = contraints_min
@@ -9,6 +18,14 @@ class Camera():
         self.min_speed = min_move_speed
         self.max_offset = max_offset
     def update_position(self, delta, focus_position, surface):
+        """
+
+        :param delta: 
+        :param focus_position:
+        :param surface: 
+        :param focus_position: 
+
+        """
         previous_position = copy.deepcopy(self.position)
         focus_position = focus_position + self.position
         win_width,win_height = surface.get_width(), surface.get_height()
@@ -30,6 +47,12 @@ class Camera():
         return not previous_position == self.position
 
     def set_position(self, focus_position, surface):
+        """
+
+        :param focus_position: param surface:
+        :param surface: 
+
+        """
         win_width,win_height = surface.get_width(), surface.get_height()
         
         new_x = -focus_position.x + 0.5*win_width

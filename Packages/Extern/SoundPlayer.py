@@ -8,6 +8,7 @@ from pydub import AudioSegment
 from pydub.utils import make_chunks
     
 class SoundPlayer:
+    """ """
     def __init__(self, soundfile=None):
         self.soundfile = soundfile
         self.isplaying = False
@@ -35,31 +36,56 @@ class SoundPlayer:
             self.isvalid = False
 
     def IsValid(self):
+        """ """
         return self.isvalid
 
     def Duration(self):
+        """ """
         return(self.pydubfile.duration_seconds)
 
     def GetRMSAmplitude(self, time, sampleDur):
+        """
+
+        :param time: 
+        :param sampleDur: 
+
+        """
         return self.pydubfile[time*1000.0:(time+sampleDur)*1000.0].rms
         
     def IsPlaying(self):
+        """ """
         if not self.thread == None:
             return self.thread.is_alive()
         return False
 
     def SetCurTime(self, time):
+        """
+
+        :param time: 
+
+        """
         self.time = time
 
     def Stop(self, fade_out_ms:int=0):
+        """
+
+        :param fade_out_ms:int:  (Default value = 0)
+
+        """
         if not fade_out_ms == 0:
             self.fade = -fade_out_ms
         self.isplaying = False
 
     def CurrentTime(self):
+        """ """
         return self.time
 
     def SetVolume(self, volume):
+        """
+
+        :param volume: 
+
+        """
         self.volume = volume
         if self.isplaying:
             p_time = self.time
@@ -67,6 +93,13 @@ class SoundPlayer:
             self.PlaySegment(p_time, self.pydubfile.duration_seconds-p_time)
 
     def _play(self, start, length, loops):
+        """
+
+        :param start: 
+        :param length: 
+        :param loops: 
+
+        """
         self.isplaying = True
 
         millisecondchunk = 50 / 1000.0
@@ -117,6 +150,12 @@ class SoundPlayer:
             self.isplaying = False
 
     def Play(self, loops=1, fade_in_ms=0):
+        """
+
+        :param loops:  (Default value = 1)
+        :param fade_in_ms:  (Default value = 0)
+
+        """
         if not fade_in_ms == 0:
             self.fade = fade_in_ms
         if self.isplaying:
@@ -130,6 +169,12 @@ class SoundPlayer:
             self.thread.start()
 
     def PlaySegment(self, start, length):
+        """
+
+        :param start: 
+        :param length: 
+
+        """
         if not self.isplaying:  # otherwise this get's kinda echo-y
             if not self.thread == None:
                 self.Stop()

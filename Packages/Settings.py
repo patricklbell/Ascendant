@@ -10,6 +10,7 @@ if platform.system() == "Windows":
 
 # https://stackoverflow.com/questions/4135928/pygame-display-position
 def get_window_rect():
+    """ """
     if platform.system() == "Windows":
         # get our window ID:
         hwnd = pygame.display.get_wm_info()["window"]
@@ -28,6 +29,7 @@ def get_window_rect():
 
 
 def init():
+    """ """
     # Setup constants
     global DEBUG, TRANSITION_MAX_FRAMES, DEBUG_DIRTY_RECTS, PLAYER_HEARTS, SELECTED_SAVE, DEFAULT_SAVE, CACHE
     PLAYER_HEARTS = 5
@@ -38,9 +40,14 @@ def init():
     SELECTED_SAVE = 0
     DEFAULT_SAVE = {
         "title_info": {
-            "percentage_completion": 0
+            "percentage_completion": 0.0
         },
-        "save_level":1
+        "save_level":1,
+        "dialog_completion":{
+
+        },
+        "has_begun":0,
+        "name":"",
     }
     
     # Load user settings and saves
@@ -61,7 +68,8 @@ def init():
                 "left": "left",
                 "right": "right",
                 "up": "up",
-                "down": "down"
+                "down": "down",
+                "dialog": "enter"
             },
             "resolution": "820x460",
             "music":True,
@@ -100,12 +108,12 @@ def init():
     gui_manager = pygame_gui.UIManager(RESOLUTION, SRC_DIRECTORY + "UI/pygamegui_theme.json")
     gui_manager.add_font_paths("fff-forward", SRC_DIRECTORY + "UI/Fonts/pixel.ttf")
     gui = Gui.Gui(
-        health_spritesheet_filename=SRC_DIRECTORY+"UI/Animations/health_bar.json",
+        health_spritesheet_filename=SRC_DIRECTORY+"UI/Animations/health.json",
         health_sprite_filename=SRC_DIRECTORY+"UI/Images/health_bar_outline.png",
         title_background_filename=SRC_DIRECTORY+"UI/Animations/pixel_fog.json",
         title_image_filename=SRC_DIRECTORY+"UI/Images/title_logo.png",
         save_sprite_filename=SRC_DIRECTORY+"UI/Images/save.png",
-        save_animation_filename=SRC_DIRECTORY+"UI/Animations/save_icon.json",
+        save_animation_filename=SRC_DIRECTORY+"UI/Animations/save.json",
     )
     if USER_SETTINGS["fullscreen"]:
         gui_manager.mouse_pos_scale_factor = (RESOLUTION[0] / screen_width, RESOLUTION[1] / screen_height)

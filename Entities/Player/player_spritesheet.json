@@ -1,5 +1,5 @@
 {
-    "filename":"Entities/Player/player_spritesheet1.png",
+    "filename":"Entities/Player/player_spritesheet.png",
     "animations":[
         {
             "name":"attack0",
