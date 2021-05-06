@@ -13,12 +13,6 @@ class Gui():
         self.title_background = Sprite.AnimatedSprite(spritesheet_json_filename=title_background_filename, spritesheet_scale=(scale,scale))
         self.title_background.play_animation("loop", loop=-1)
         self.title_gui = {
-            # "background": pygame_gui.elements.UIImage(
-            #     relative_rect=pygame.Rect((0, 0), Settings.RESOLUTION),
-            #     image_surface=pygame.image.load(
-            #         title_background_filename).convert_alpha(),
-            #     manager=Settings.gui_manager
-            # ),
             "logo": pygame_gui.elements.UIImage(
                 relative_rect=pygame.Rect(
                     (Settings.RESOLUTION[0] / 2 - 327/2, 90), [327, 66]),

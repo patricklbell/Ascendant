@@ -85,7 +85,7 @@ def init():
     pygame.init()
     icon = pygame.image.load(SRC_DIRECTORY + "UI/logo.png")
     pygame.display.set_icon(icon)
-    pygame.display.set_caption("Duel")
+    pygame.display.set_caption("Ascendant")
 
     pygame.mouse.set_cursor(*pygame.cursors.load_xbm(SRC_DIRECTORY + "UI/cursor.xbm", SRC_DIRECTORY + "UI/cursor_mask.xbm"))
 
