@@ -36,10 +36,10 @@ def init():
             iframes=90,
             calculate_flip=True,
             calculate_white=True,
-            water_splash_json_filename=Settings.SRC_DIRECTORY + "Entities/Water/splash.json",
-            water_big_splash_json_filename=Settings.SRC_DIRECTORY + "Entities/Water/big_splash.json",
-            short_stop_json_filename=Settings.SRC_DIRECTORY + "Entities/Player/short_stop01.json",
-            hard_stop_json_filename=Settings.SRC_DIRECTORY + "Entities/Player/hard_stop01.json",
+            water_splash_json_filename=Settings.SRC_DIRECTORY + "Entities/Water/splash_spritesheet.json",
+            water_big_splash_json_filename=Settings.SRC_DIRECTORY + "Entities/Water/big_splash_spritesheet.json",
+            short_stop_json_filename=Settings.SRC_DIRECTORY + "Entities/Player/short_stop01_spritesheet.json",
+            hard_stop_json_filename=Settings.SRC_DIRECTORY + "Entities/Player/hard_stop01_spritesheet.json",
             transition_frames=30,
             sound_json_filename=Settings.SRC_DIRECTORY + "Sound/Player/sounds.json"
         ),
@@ -66,16 +66,16 @@ def init():
         ),
         water_base=Water.Water(
             waterbase_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/waterbase_tileset.json",
-            water_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water.json",
-            water_bubbly_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbly.json",
-            water_bubbliest_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbliest.json",
+            water_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_spritesheet.json",
+            water_bubbly_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbly_spritesheet.json",
+            water_bubbliest_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbliest_spritesheet.json",
             spritesheet_scale=(0.6,0.6),
         ),
         toxic_water_base=Water.Water(
-            waterbase_json_filename=Settings.SRC_DIRECTORY+"Entities/Toxic_Water/waterbase_tileset.json",
-            water_json_filename=Settings.SRC_DIRECTORY+"Entities/Toxic_Water/water.json",
-            water_bubbly_json_filename=Settings.SRC_DIRECTORY+"Entities/Toxic_Water/water_bubbly.json",
-            water_bubbliest_json_filename=Settings.SRC_DIRECTORY+"Entities/Toxic_Water/water_bubbliest.json",
+            waterbase_json_filename=Settings.SRC_DIRECTORY+"Entities/ToxicWater/waterbase_tileset.json",
+            water_json_filename=Settings.SRC_DIRECTORY+"Entities/ToxicWater/water_spritesheet.json",
+            water_bubbly_json_filename=Settings.SRC_DIRECTORY+"Entities/ToxicWater/water_bubbly_spritesheet.json",
+            water_bubbliest_json_filename=Settings.SRC_DIRECTORY+"Entities/ToxicWater/water_bubbliest_spritesheet.json",
             spritesheet_scale=(0.6,0.6),
         )
     )
@@ -253,20 +253,18 @@ def gameloop():
         pygame.display.update()
     return 0
 
-def cleanup():
-    pygame.display.quit()
-    pygame.quit()
-
-    # Update sound cache
-    pickle.dump(Settings.MUSIC, open(Settings.SRC_DIRECTORY+".cache/music.p", mode="wb+"))
-    pickle.dump(Settings.SOUND_EFFECTS, open(Settings.SRC_DIRECTORY+".cache/sound_effects.p", mode="wb+"))
-    if Settings.DEBUG:
-        print("wrote sound cache")
-
 init()
 while gameloop() == 1:
     if Settings.DEBUG:
         print("settings restart")
-    cleanup()
+    pygame.display.quit()
+    pygame.quit()
     init()
-cleanup()
+
+# Update sound cache
+pickle.dump(Settings.MUSIC, open(Settings.SRC_DIRECTORY+".cache/music.p", mode="wb+"))
+pickle.dump(Settings.SOUND_EFFECTS, open(Settings.SRC_DIRECTORY+".cache/sound_effects.p", mode="wb+"))
+if Settings.DEBUG:
+    print("wrote sound cache")
+pygame.display.quit()
+pygame.quit()

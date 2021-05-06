@@ -1,0 +1,16 @@
+{
+    "filename":"UI/Animations/save_spritesheet.png",
+    "animations":[
+        {
+            "name":"base",
+            "x_init_offset":0,
+            "y_init_offset":0,
+            "x_size":64,
+            "y_size":64,
+            "x_offset":64,
+            "y_offset":0,
+            "time":0.6,
+            "frame_length":30
+        }
+    ]
+}

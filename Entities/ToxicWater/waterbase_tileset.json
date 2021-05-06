@@ -1,5 +1,5 @@
 {
-    "filename": "Entities/Toxic_Water/waterbase_tileset.png",
+    "filename": "Entities/ToxicWater/waterbase_tileset.png",
     "images": {
         "base": {
             "x_offset": 144,

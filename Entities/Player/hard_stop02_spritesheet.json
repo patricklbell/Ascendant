@@ -1,5 +1,5 @@
 {
-    "filename":"Entities/Player/hard_stop.png",
+    "filename":"Entities/Player/hard_stop02_spritesheet.png",
     "animations":[
         {
             "name":"loop",
