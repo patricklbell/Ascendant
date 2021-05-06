@@ -68,7 +68,7 @@ def init():
             waterbase_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/waterbase_tileset.json",
             water_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_spritesheet.json",
             water_bubbly_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbly_spritesheet.json",
-            water_bubbliest_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbliest_spritesheet.json",
+            water_bubbliest_json_filename=Settings.SRC_DIRECTORY+"Entities/Water/water_bubbly_spritesheet.json",
             spritesheet_scale=(0.6,0.6),
         ),
         toxic_water_base=Water.Water(
@@ -86,7 +86,8 @@ def gameloop():
     is_running, is_paused, is_title = (True, False, True)
     damage_freeze = 0
 
-    Settings.gui.set_state(title=is_title)
+    if is_title:
+        Settings.gui.set_state("title")
     Settings.MUSIC["title"].Play(loops=-1)
     
     transition_frames = 0
@@ -126,7 +127,7 @@ def gameloop():
             debug_console.console.update(events)
 
         prev_title = is_title
-        is_running, is_paused, is_title, save, restart = Settings.gui.handle_events(events)
+        is_running, is_paused, is_title, save, restart, name = Settings.gui.handle_events(events)
 
         is_dialog = False
         for dialog in level.dialog_boxes:
@@ -141,6 +142,8 @@ def gameloop():
             transition_frames = Settings.TRANSITION_MAX_FRAMES
             Settings.SELECTED_SAVE = save
             level.load_save(save_num=Settings.SELECTED_SAVE)
+            if not name is None:
+                level.name = name
             Settings.MUSIC["ambient"].Play(loops=-1)
             Settings.MUSIC["title"].Stop(fade_out_ms=1000)
         if prev_title == False and is_title == True:
@@ -261,10 +264,16 @@ while gameloop() == 1:
     pygame.quit()
     init()
 
+try:
+    os.makedirs(Settings.SRC_DIRECTORY+".cache")
+except FileExistsError:
+    pass
+
 # Update sound cache
 pickle.dump(Settings.MUSIC, open(Settings.SRC_DIRECTORY+".cache/music.p", mode="wb+"))
 pickle.dump(Settings.SOUND_EFFECTS, open(Settings.SRC_DIRECTORY+".cache/sound_effects.p", mode="wb+"))
 if Settings.DEBUG:
     print("wrote sound cache")
+
 pygame.display.quit()
 pygame.quit()

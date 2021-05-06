@@ -1,1 +1,1 @@
-{"fullscreen": false, "bindings": {"attack": "z", "jump": "space", "left": "left", "right": "right", "dialog": "return", "up": "up", "down": "down"}, "resolution": "770x430", "music": true, "music_volume": 40, "sound_effects": true, "sound_effects_volume": 100}
+{"fullscreen": false, "bindings": {"attack": "z", "jump": "space", "left": "left", "right": "right", "dialog": "return", "up": "up", "down": "down"}, "resolution": "770x430", "music": false, "music_volume": 84, "sound_effects": true, "sound_effects_volume": 100}

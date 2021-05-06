@@ -129,7 +129,6 @@ def init():
     if CACHE:
         if (os.path.exists(SRC_DIRECTORY+".cache/music.p") and 
             os.path.exists(SRC_DIRECTORY+".cache/sound_effects.p")):
-
             if DEBUG:
                 print("loaded sound cache")
                 
@@ -170,6 +169,11 @@ def init():
                 MUSIC[sounds["name"]].SetVolume(0)
         
         if should_cache:
+            try:
+                os.makedirs(SRC_DIRECTORY + ".cache")
+            except FileExistsError:
+                pass
+
             pickle.dump(MUSIC, open(SRC_DIRECTORY+".cache/music.p", mode="wb+"))
             pickle.dump(SOUND_EFFECTS, open(SRC_DIRECTORY+".cache/sound_effects.p", mode="wb+"))
 

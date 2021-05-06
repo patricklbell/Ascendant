@@ -26,6 +26,35 @@
             "unfilled_bar":"#DDDDDDFF"
         }
     },
+    "text_entry_line":
+    {
+        "colours":
+        {
+            "dark_bg": "#25292e",
+            "selected_bg": "#55595e",
+            "normal_text": "#AAAAAA",
+            "selected_text": "#FFFFFF",
+            "normal_border": "#FFFFFF"
+        },
+        "font":
+        {
+            "name": "fff-forward",
+            "size": "16",
+            "bold": "1",
+            "italic": "0",
+            "regular_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"},
+            "bold_italic_resource": { "package": "UI.Fonts", "resource": "pixel.ttf"}
+        },
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "0",
+            "padding": "6,4"
+        }
+    },
     "button":
     {
         "font":

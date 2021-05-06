@@ -192,6 +192,8 @@ class Level():
             self.load_level(level_num=json_data["save_level"])
             self.save_level = json_data["save_level"]
             self.dialog_completion = json_data["dialog_completion"]
+            self.has_begun = json_data["has_begun"]
+            self.name = json_data["name"]
         except Exception as e:
             if Settings.DEBUG:
                 print(f"Failed to load save {save_filename}, error: ", e)
@@ -204,6 +206,8 @@ class Level():
             self.load_level()
             self.save_level = Settings.DEFAULT_SAVE["save_level"]
             self.dialog_completion = Settings.DEFAULT_SAVE["dialog_completion"]
+            self.has_begun = Settings.DEFAULT_SAVE["has_begun"]
+            self.name = Settings.DEFAULT_SAVE["name"]
         self.save_dialog_completion = copy.deepcopy(self.dialog_completion)
         self.player.play_animation("unsit")
         
@@ -211,6 +215,8 @@ class Level():
         """ """
         save_filename = Settings.SAVE_FILETEMPLATE.substitute(num=str(Settings.SELECTED_SAVE))
         save_data = Settings.DEFAULT_SAVE
+        save_data["name"] = self.name
+        save_data["has_begun"] = self.has_begun
         save_data["save_level"] = self.save_level
         save_data["dialog_completion"] = self.save_dialog_completion
 
@@ -218,8 +224,9 @@ class Level():
         save_data["title_info"]["percentage_completion"] = percent_completion
 
         # Update percentage completion in gui
-        Settings.gui.select_save_gui[f"save{Settings.SELECTED_SAVE}_label"].set_text(f"SAVE 1 ({percent_completion}%):")
+        Settings.gui.menus["select_save"][f"save{Settings.SELECTED_SAVE}_label"].set_text(f"SAVE 1 ({percent_completion}%):")
         Settings.gui.completions[Settings.SELECTED_SAVE-1] = percent_completion
+        Settings.gui.has_begun[Settings.SELECTED_SAVE-1] = self.has_begun
 
         try:
             with open(save_filename, 'w') as file:

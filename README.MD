@@ -1,7 +1,7 @@
-# Ascendant, By Patrick Bell #
+### Ascendant ###
 A pure python platformer complete with animation, sound, and gui. Enjoy!
 
-### TODO: ###
+# TODO: #
 * Cache images
 * Sort out pygame's issue with dirty rects
 * Run performance tests
