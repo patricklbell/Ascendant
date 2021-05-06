@@ -216,7 +216,7 @@ class Level():
         save_filename = Settings.SAVE_FILETEMPLATE.substitute(num=str(Settings.SELECTED_SAVE))
         save_data = Settings.DEFAULT_SAVE
         save_data["name"] = self.name
-        save_data["has_begun"] = self.has_begun
+        save_data["has_begun"] = self.has_begun or self.save_level > 1
         save_data["save_level"] = self.save_level
         save_data["dialog_completion"] = self.save_dialog_completion
 
@@ -226,7 +226,7 @@ class Level():
         # Update percentage completion in gui
         Settings.gui.menus["select_save"][f"save{Settings.SELECTED_SAVE}_label"].set_text(f"SAVE 1 ({percent_completion}%):")
         Settings.gui.completions[Settings.SELECTED_SAVE-1] = percent_completion
-        Settings.gui.has_begun[Settings.SELECTED_SAVE-1] = self.has_begun
+        Settings.gui.has_begun[Settings.SELECTED_SAVE-1] = save_data["has_begun"]
 
         try:
             with open(save_filename, 'w') as file:

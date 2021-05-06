@@ -131,20 +131,19 @@ class Gui():
                 "title": pygame_gui.elements.UILabel(
                     text="Enter a name:",
                     relative_rect=pygame.Rect(
-                        (Settings.RESOLUTION[0]/2 - 100, Settings.RESOLUTION[1]/2 - vertical_height*2), (200, vertical_height)),
+                        (Settings.RESOLUTION[0]/2 - 100, Settings.RESOLUTION[1]/2 - vertical_height*4), (200, vertical_height)),
                     object_id="#center_label",
                     manager=Settings.gui_manager,
                 ),
                 "entry": pygame_gui.elements.UITextEntryLine(
                     relative_rect=pygame.Rect(
-                        (Settings.RESOLUTION[0]/2 - 100, Settings.RESOLUTION[1]/2 + vertical_height), (200, vertical_height)),
+                        (Settings.RESOLUTION[0]/2 - 100, Settings.RESOLUTION[1]/2 - vertical_height), (200, vertical_height)),
                     manager=Settings.gui_manager,
                 ),
                 "continue": pygame_gui.elements.UIButton(
                     relative_rect=pygame.Rect(
-                        (Settings.RESOLUTION[0]/2-100, Settings.RESOLUTION[1]*8/9-25), (200, 50)),
+                        (Settings.RESOLUTION[0]/2-130, Settings.RESOLUTION[1]*7/9-25), (200, 50)),
                     text="CONTINUE",
-                    # object_id='#center_button',
                     manager=Settings.gui_manager,
                     starting_height=2,
                 ),
@@ -477,24 +476,25 @@ class Gui():
                             ["OFF", "ON"][Settings.USER_SETTINGS["sound_effects"]])
                     elif event.ui_element == self.menus["select_save"]["save1"]:
                         self.selected_save = 1
-                        if self.has_begun[0]:
+                        if not self.has_begun[0]:
                             self.set_state("name")
                         else:
                             self.set_state()
                     elif event.ui_element == self.menus["select_save"]["save2"]:
                         self.selected_save = 2
-                        if self.has_begun[1]:
+                        if not self.has_begun[1]:
                             self.set_state("name")
                         else:
                             self.set_state()
                     elif event.ui_element == self.menus["select_save"]["save3"]:
                         self.selected_save = 3
-                        if self.has_begun[2]:
+                        if not self.has_begun[2]:
                             self.set_state("name")
                         else:
                             self.set_state()
                     elif event.ui_element == self.menus["name"]["continue"]:
                         name = self.menus["name"]["entry"].get_text()
+                        self.set_state()
                     elif event.ui_element == self.menus["select_save"]["back"]:
                         self.set_state("title")
                     elif event.ui_element == self.menus["settings"]["save"] and not ("binding" in self.state):
@@ -587,7 +587,7 @@ class Gui():
         :param delta: 
 
         """
-        if ("title" in self.state) or ("select_save" in self.state) or ("title_settings" in self.state):
+        if ("title" in self.state) or ("select_save" in self.state) or ("title_settings" in self.state) or ("name" in self.state):
             self.title_background.render(
                 surface, pygame.Vector2(0, 0), delta=delta)
             if ("title" in self.state):
@@ -607,10 +607,10 @@ class Gui():
                 for el in menu.values():
                     el.hide()
 
-        if set(["title_settings", "title", "select_save"]).intersection(state):
+        if set(["title_settings", "title", "select_save", "name"]).intersection(state):
             self.title_background.show()
         else:
             self.title_background.hide()
 
         pygame.mouse.set_visible(bool(set(
-            ["paused", "settings",  "binding",  "title",  "select_save",  "title_settings"]).intersection(state)))
+            ["paused", "settings",  "binding",  "title",  "select_save",  "title_settings", "name"]).intersection(state)))

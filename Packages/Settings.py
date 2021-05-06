@@ -46,7 +46,7 @@ def init():
         "dialog_completion":{
 
         },
-        "has_begun":0,
+        "has_begun":False,
         "name":"",
     }
     

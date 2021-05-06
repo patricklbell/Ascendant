@@ -1,12 +1,14 @@
-import os, sys, warnings, pickle, copy
-from typing import Set
+import os, warnings, pickle, copy, platform
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (10,10)
 warnings.simplefilter('ignore')
-import pygame, json, pygame_gui
-from Packages import  Settings, Sprite, Level, Camera, Player, Enemy, Gui, Water, Console
-from Packages.Extern.pygame_console import game_console
+import pygame, pygame_gui
+from Packages import  Settings, Level, Player, Gui, Enemy, Water, Console
 
-level = None
+if platform.system() == "Windows":
+    import ctypes
+
+level, debug_console = None, None
 def init():
     global level, debug_console
     Settings.init()
@@ -118,7 +120,6 @@ def gameloop():
                 del old_surface_saved
 
                 Settings.gui_manager.mouse_pos_scale_factor = (Settings.RESOLUTION[0] / event.w, Settings.RESOLUTION[1] / event.h)
-                print(Settings.gui_manager.mouse_pos_scale_factor)
                 dt = 0
 
             Settings.gui_manager.process_events(event)
@@ -127,7 +128,7 @@ def gameloop():
             debug_console.console.update(events)
 
         prev_title = is_title
-        is_running, is_paused, is_title, save, restart, name = Settings.gui.handle_events(events)
+        is_running, is_paused, is_title, save, is_restart, name = Settings.gui.handle_events(events)
 
         is_dialog = False
         for dialog in level.dialog_boxes:
@@ -136,9 +137,9 @@ def gameloop():
             
         is_paused = is_paused or debug_console.console.enabled
 
-        if restart:
+        if is_restart:
             return 1
-        if prev_title == True and is_title == False:
+        if prev_title and not is_title:
             transition_frames = Settings.TRANSITION_MAX_FRAMES
             Settings.SELECTED_SAVE = save
             level.load_save(save_num=Settings.SELECTED_SAVE)
@@ -146,14 +147,14 @@ def gameloop():
                 level.name = name
             Settings.MUSIC["ambient"].Play(loops=-1)
             Settings.MUSIC["title"].Stop(fade_out_ms=1000)
-        if prev_title == False and is_title == True:
+        if not prev_title and is_title:
             level.save_game()
             Settings.MUSIC["ambient"].Stop(fade_out_ms=1000)
             Settings.MUSIC["title"].Play(loops=-1)
             
         # Check whether display has been moved
         new_window_rect = Settings.get_window_rect()
-        if not new_window_rect == None and not (new_window_rect.top == Settings.window_rect.top and new_window_rect.left == Settings.window_rect.left):
+        if not new_window_rect is None and not (new_window_rect.top == Settings.window_rect.top and new_window_rect.left == Settings.window_rect.left):
             dt = 0
         Settings.window_rect = new_window_rect
 
@@ -259,10 +260,40 @@ def gameloop():
 init()
 while gameloop() == 1:
     if Settings.DEBUG:
-        print("settings restart")
-    pygame.display.quit()
-    pygame.quit()
-    init()
+        print("Reset display and recalculated gui")
+
+    Settings.RESOLUTION_STR = Settings.USER_SETTINGS["resolution"]
+    Settings.RESOLUTION = (int(Settings.RESOLUTION_STR.split('x')[0]), int(Settings.RESOLUTION_STR.split('x')[1]))
+    
+    info = pygame.display.Info()
+    screen_width,screen_height = info.current_w,info.current_h
+    if platform.system() == "Windows":
+        # https://gamedev.stackexchange.com/questions/105750/pygame-fullsreen-display-issue
+        ctypes.windll.user32.SetProcessDPIAware()
+        true_res = (ctypes.windll.user32.GetSystemMetrics(0),ctypes.windll.user32.GetSystemMetrics(1))
+        screen_width, screen_height = true_res
+    Settings.is_fullscreen = Settings.USER_SETTINGS["fullscreen"]
+    if Settings.USER_SETTINGS["fullscreen"]:
+        Settings.true_surface = pygame.display.set_mode((screen_width, screen_height), flags=pygame.FULLSCREEN)   
+    else:
+        Settings.true_surface = pygame.display.set_mode(Settings.RESOLUTION, flags=pygame.RESIZABLE)
+
+    Settings.surface = pygame.Surface(Settings.RESOLUTION, flags=pygame.SRCALPHA)
+    Settings.window_rect = Settings.get_window_rect()
+
+    Settings.gui_manager = pygame_gui.UIManager(Settings.RESOLUTION, Settings.SRC_DIRECTORY + "UI/pygamegui_theme.json")
+    Settings.gui_manager.add_font_paths("fff-forward", Settings.SRC_DIRECTORY + "UI/Fonts/pixel.ttf")
+    Settings.gui = Gui.Gui(
+        health_spritesheet_filename=Settings.SRC_DIRECTORY+"UI/Animations/health_spritesheet.json",
+        health_sprite_filename=Settings.SRC_DIRECTORY+"UI/Images/health_bar_outline.png",
+        title_background_filename=Settings.SRC_DIRECTORY+"UI/Animations/pixel_fog_spritesheet.json",
+        title_animation_filename=Settings.SRC_DIRECTORY+"UI/Animations/title_logo_spritesheet.json",
+        save_sprite_filename=Settings.SRC_DIRECTORY+"UI/Images/save.png",
+        save_animation_filename=Settings.SRC_DIRECTORY+"UI/Animations/save_spritesheet.json",
+    )
+
+    Settings.gui_manager.mouse_pos_scale_factor = (Settings.RESOLUTION[0] / Settings.true_surface.get_width(), Settings.RESOLUTION[1] / Settings.true_surface.get_height())
+
 
 try:
     os.makedirs(Settings.SRC_DIRECTORY+".cache")

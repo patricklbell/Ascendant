@@ -30,9 +30,9 @@
     {
         "colours":
         {
-            "dark_bg": "#25292e",
-            "selected_bg": "#55595e",
-            "normal_text": "#AAAAAA",
+            "dark_bg": "#00000000",
+            "selected_bg": "#00000000",
+            "normal_text": "#DDDDDDFF",
             "selected_text": "#FFFFFF",
             "normal_border": "#FFFFFF"
         },
@@ -50,7 +50,7 @@
         "misc":
         {
             "shape": "rectangle",
-            "border_width": "0",
+            "border_width": "3",
             "shadow_width": "0",
             "padding": "6,4"
         }
