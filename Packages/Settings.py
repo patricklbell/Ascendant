@@ -108,12 +108,12 @@ def init():
     gui_manager = pygame_gui.UIManager(RESOLUTION, SRC_DIRECTORY + "UI/pygamegui_theme.json")
     gui_manager.add_font_paths("fff-forward", SRC_DIRECTORY + "UI/Fonts/pixel.ttf")
     gui = Gui.Gui(
-        health_spritesheet_filename=SRC_DIRECTORY+"UI/Animations/health.json",
+        health_spritesheet_filename=SRC_DIRECTORY+"UI/Animations/health_spritesheet.json",
         health_sprite_filename=SRC_DIRECTORY+"UI/Images/health_bar_outline.png",
-        title_background_filename=SRC_DIRECTORY+"UI/Animations/pixel_fog.json",
-        title_image_filename=SRC_DIRECTORY+"UI/Images/title_logo.png",
+        title_background_filename=SRC_DIRECTORY+"UI/Animations/pixel_fog_spritesheet.json",
+        title_animation_filename=SRC_DIRECTORY+"UI/Animations/title_logo_spritesheet.json",
         save_sprite_filename=SRC_DIRECTORY+"UI/Images/save.png",
-        save_animation_filename=SRC_DIRECTORY+"UI/Animations/save.json",
+        save_animation_filename=SRC_DIRECTORY+"UI/Animations/save_spritesheet.json",
     )
     if USER_SETTINGS["fullscreen"]:
         gui_manager.mouse_pos_scale_factor = (RESOLUTION[0] / screen_width, RESOLUTION[1] / screen_height)

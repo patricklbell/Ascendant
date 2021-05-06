@@ -1,0 +1,16 @@
+{
+    "filename":"UI/Animations/pixel_fog_spritesheet.png",
+    "animations":[
+        {
+            "name":"loop",
+            "x_init_offset":0,
+            "y_init_offset":0,
+            "x_size":700,
+            "y_size":394,
+            "x_offset":0,
+            "y_offset":394,
+            "time":3.5,
+            "frame_length":118
+        }
+    ]
+}

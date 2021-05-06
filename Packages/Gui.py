@@ -5,13 +5,16 @@ from Packages import Settings, Sprite
 
 class Gui():
     """ """
-    def __init__(self, health_spritesheet_filename, health_sprite_filename, title_image_filename, title_background_filename, save_sprite_filename, save_animation_filename, state=None):
+    def __init__(self, health_spritesheet_filename, health_sprite_filename, title_animation_filename, title_background_filename, save_sprite_filename, save_animation_filename, state=None):
         self.focused = 0
 
-        title_surface = pygame.image.load(title_image_filename).convert_alpha()
         scale = max(Settings.RESOLUTION[0] / 700, Settings.RESOLUTION[1] / 394)
         self.title_background = Sprite.AnimatedSprite(spritesheet_json_filename=title_background_filename, spritesheet_scale=(scale,scale))
         self.title_background.play_animation("loop", loop=-1)
+
+        self.title_animation = Sprite.AnimatedSprite(position=pygame.Vector2(Settings.RESOLUTION[0]/2-326.75/2, 75), spritesheet_json_filename=title_animation_filename, spritesheet_scale=(0.25, 0.25))
+        self.title_animation.play_animation("loop", loop=-1)
+
         self.title_gui = {
             "logo": pygame_gui.elements.UIImage(
                 relative_rect=pygame.Rect(
@@ -542,6 +545,8 @@ class Gui():
         """
         if self.state == "title" or self.state == "select_save" or self.state == "title_settings":
             self.title_background.render(surface, pygame.Vector2(0,0), delta=delta)
+            if self.state == "title":
+                self.title_animation.render(surface, delta=delta)
 
     def set_state(self, pause=False, settings=False, binding=False, title=False, select_save=False, title_settings=False):
         """

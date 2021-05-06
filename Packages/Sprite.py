@@ -233,7 +233,7 @@ class AnimatedSprite():
                 if calculate_flip:
                     animation_data["frames_white_flipped"] = []
 
-            for i in range(frame_length):
+            for _ in range(frame_length):
                 rect = pygame.Rect((x, y, x_size, y_size))
                 image = pygame.Surface(rect.size, pygame.SRCALPHA).convert_alpha()
                 image.blit(self.spritesheet_image, (0, 0), rect)
