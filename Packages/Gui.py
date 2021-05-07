@@ -34,6 +34,7 @@ class Gui():
         vertical_gap, vertical_height = 40, 30
         self.completions = []
         self.has_begun = []
+        self.names = ["", "", ""]
         for i in range(3):
             save_filename = Settings.SAVE_FILETEMPLATE.substitute(num=str(i+1))
             try:
@@ -42,11 +43,13 @@ class Gui():
                 self.completions.append(
                     json_data["title_info"]["percentage_completion"])
                 self.has_begun.append(json_data["has_begun"])
+                self.names[i] = json_data["name"]
             except FileNotFoundError as e:
                 if Settings.DEBUG:
                     print(f"Failed to load save {save_filename}, error: ", e)
                 self.completions.append(0)
                 self.has_begun.append(False)
+
 
         self.menus = {
             "title": {
@@ -74,7 +77,7 @@ class Gui():
             },
             "select_save": {
                 "save1_label": pygame_gui.elements.UILabel(
-                    text=f"SAVE 1 ({self.completions[0]}%):",
+                    text=f"SAVE 1 ({self.completions[0]}%): {self.names[0]}",
                     object_id='#small_label',
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3), (200, vertical_height)),
@@ -89,7 +92,7 @@ class Gui():
                     starting_height=2,
                 ),
                 "save2_label": pygame_gui.elements.UILabel(
-                    text=f"SAVE 2 ({self.completions[1]}%):",
+                    text=f"SAVE 1 ({self.completions[1]}%): {self.names[1]}",
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3+vertical_gap), (200, vertical_height)),
                     object_id='#small_label',
@@ -104,7 +107,7 @@ class Gui():
                     starting_height=2,
                 ),
                 "save3_label": pygame_gui.elements.UILabel(
-                    text=f"SAVE 3 ({self.completions[2]}%):",
+                    text=f"SAVE 1 ({self.completions[2]}%): {self.names[2]}",
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3+vertical_gap*2), (200, vertical_height)),
                     object_id='#small_label',

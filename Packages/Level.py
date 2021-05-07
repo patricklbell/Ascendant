@@ -224,7 +224,8 @@ class Level():
         save_data["title_info"]["percentage_completion"] = percent_completion
 
         # Update percentage completion in gui
-        Settings.gui.menus["select_save"][f"save{Settings.SELECTED_SAVE}_label"].set_text(f"SAVE 1 ({percent_completion}%):")
+        Settings.gui.menus["select_save"][f"save{Settings.SELECTED_SAVE}_label"].set_text(f"SAVE 1 ({percent_completion}%): {self.name}")
+        Settings.gui.names[Settings.gui.selected_save-1] = self.name
         Settings.gui.completions[Settings.SELECTED_SAVE-1] = percent_completion
         Settings.gui.has_begun[Settings.SELECTED_SAVE-1] = save_data["has_begun"]
 
