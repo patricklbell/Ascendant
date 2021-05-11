@@ -220,10 +220,14 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         self.collider_size = kwargs.get("collider_size", pygame.Vector2(0,0))
 
         # Setup state
-        self.drift_speed = kwargs.get("drift_speed", 10)
-        self.max_drift_distance = kwargs.get("max_drift_distance", 20)
-
         self.og_position = pygame.Vector2(0,0)
+        self.drift_speed = kwargs.get("drift_speed", 10)
+        self.attack_speed = kwargs.get("attack_speed", 10)
+        self.max_speed = kwargs.get("max_speed", 10)
+        self.max_drift_distance = kwargs.get("max_drift_distance", 10)
+        self.alert_distance = kwargs.get("alert_distance", 100)
+        self.attack_position = pygame.Vector2(0,0)
+
         self.velocity = pygame.Vector2(0, 0)
         self.collider = pygame.Rect(
             self.position.x+self.collider_offset.x, 
@@ -232,8 +236,7 @@ class FlyingEnemy(Sprite.AnimatedSprite):
             self.collider_size.y
         )
         
-        # Setup state machine, expects: "alive", "phoenix"
-        self.state = "alive"
+        self.state = "idle"
 
         if "spritesheet_json_filename" in kwargs:
             self.play_animation("fly", loop=True)
@@ -261,7 +264,15 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         :param state:  (Default value = None)
 
         """
-        pass
+        if (self.position - player_position).length() < self.alert_distance:
+            self.state = "alert"
+            self.attack_position = player_position
+            print("alerted")
+        else:
+            self.state = "idle"
+            self.og_position = self.position
+        if not state is None:
+            self.state = state
 
     def physics_process(self, delta, colliders = None, player_position=None, attack_colliders=None):
         """
@@ -272,44 +283,43 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         :param attack_colliders:  (Default value = None)
 
         """
+        is_damaged = False
         self.flipX = self.velocity.x < 0
 
-        rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100) / 100
-        rand_vel_y = random.randrange(-self.drift_speed*100, self.drift_speed*100) / 100
-        
-        self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
-        
-        # Scale velocity to distance from drift
-        self.position += self.velocity * (1 / max((self.position - self.og_position).length()/15, 0.001)) * delta
+        if self.state == "alert":
+            rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100)/1000
+            rand_vel_y = random.randrange(-self.drift_speed*100, self.drift_speed*100)/1000
+            self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
+            self.velocity += pygame.Vector2(self.attack_position - self.position).normalize() * self.attack_speed
+            self.position += self.velocity * delta
+        else:
+            rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100)/100
+            rand_vel_y = random.randrange(-self.drift_speed*100, self.drift_speed*100)/100
+            self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
 
-        if self.position.x - self.og_position.x >= self.max_drift_distance:
-            self.velocity.x = min(self.velocity.x, 0)
-        elif self.position.x - self.og_position.x <= -self.max_drift_distance:
-            self.velocity.x = max(self.velocity.x, 0)
-        if self.position.y - self.og_position.y >= self.max_drift_distance:
-            self.velocity.y = min(self.velocity.y, 0)
-        elif self.position.y - self.og_position.y <= -self.max_drift_distance:
-            self.velocity.y = max(self.velocity.y, 0)
+            if self.position.x - self.og_position.x >= self.max_drift_distance:
+                self.velocity.x = min(self.velocity.x, 0)
+            elif self.position.x - self.og_position.x <= -self.max_drift_distance:
+                self.velocity.x = max(self.velocity.x, 0)
+            if self.position.y - self.og_position.y >= self.max_drift_distance:
+                self.velocity.y = min(self.velocity.y, 0)
+            elif self.position.y - self.og_position.y <= -self.max_drift_distance:
+                self.velocity.y = max(self.velocity.y, 0)
+            
+            self.position += self.velocity * delta
+
 
         self.collider.x = self.position.x + self.collider_offset.x
         self.collider.y = self.position.y + self.collider_offset.y
 
         # Check for damage events
         is_damaged = False
-        if not attack_colliders == None and not self.state == "phoenix":
+        if not attack_colliders == None:
             generous_collider = self.collider.inflate(1.2,1.2)
             collision = generous_collider.collidelist(attack_colliders)
             if not collision == -1:
-                def end_revive(self):
-                    """ """
-                    self.state = "alive"
-                    self.play_animation("fly", loop=True)
-                def revive(self):
-                    """ """
-                    self.play_animation("revive", on_animation_end=end_revive)
-                
-                self.play_animation("death", on_animation_end=revive)
-                self.state = "phoenix"
+                self.play_animation("death")
+                self.state = "death"
                 is_damaged = True
 
         if not colliders == None:
@@ -344,11 +354,12 @@ class FlyingEnemy(Sprite.AnimatedSprite):
                             self.velocity.y = abs(self.velocity.y) / 2
                         else:
                             self.velocity.y = -abs(self.velocity.y) / 2
+        self.update_state(player_position)
         return is_damaged
                     
     def get_damage_colliders(self):
         """ """
-        if self.state == "alive":
+        if self.state != "death":
             return [self.collider]
         return []
     
