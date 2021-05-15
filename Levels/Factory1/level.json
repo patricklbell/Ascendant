@@ -1,0 +1,52 @@
+{
+    "layers":[
+        {
+            "filename":"Background.png",
+            "depth":-3,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Midground.png",
+            "depth":-2,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Frontground.png",
+            "depth":-1,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Foreground.png",
+            "depth":1,
+            "parallaxX":1,
+            "parallaxY":1
+        }
+    ],
+    "entities":{
+        "filename":"entities.json"
+    },
+    "level_transition": [
+        {
+            "to_level": 1,
+            "to_transition": 0,
+            "direction": 2
+        },
+        {
+            "to_level": 2,
+            "to_transition": 0,
+            "direction": 3
+        }
+    ],
+    "particles":{
+        "likelihood":0.05,
+        "min_velocity":[5, -2],
+        "max_velocity":[50, 2],
+        "colors":[
+            [33, 48, 34,255], [30,30,30,255], [69, 61, 51,255], [199,199,199,255], [48,48,48,255]
+        ],
+        "max":100
+    }
+}

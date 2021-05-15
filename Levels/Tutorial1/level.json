@@ -1,0 +1,75 @@
+{
+    "layers":[
+        {
+            "filename":"Background.png",
+            "depth":-3,
+            "parallaxX":0.95,
+            "parallaxY":1
+        },
+        {
+            "filename":"Midground.png",
+            "depth":-2,
+            "parallaxX":0.98,
+            "parallaxY":1
+        },
+        {
+            "filename":"Frontground.png",
+            "depth":-1,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Foreground.png",
+            "depth":1,
+            "parallaxX":1,
+            "parallaxY":1
+        }
+    ],
+    "entities":{
+        "filename":"entities.json"
+    },
+    "level_transition": [
+        {
+            "to_level": "FactoryEntry",
+            "to_transition": 1,
+            "direction": "N"
+        },
+        {
+            "to_level": "Tutorial2",
+            "to_transition": 0,
+            "direction": "E"
+        },
+        {
+            "to_level": "Tutorial2",
+            "to_transition": 1,
+            "direction": "E"
+        }
+    ],
+    "particles":{
+        "likelihood":0.05,
+        "min_velocity":[5, -2],
+        "max_velocity":[50, 2],
+        "colors":[
+            [106, 190, 48, 255], [143, 151, 74, 255], [138, 111, 48, 255], [153, 229, 80, 255], [95, 143, 110, 255]
+        ],
+        "max":100
+    },
+    "dialog":[
+        {
+            "text":["Why do they attack me?", "Perhaps my sword can defeat them."],
+            "save_progress_name":"tutorial_6"
+        },
+        {
+            "text":["Who am I?", "I seek the light", "Use <- and -> to move"],
+            "save_progress_name":"tutorial_1"
+        },
+        {
+            "text":["Use space to jump"],
+            "save_progress_name":"tutorial_2"
+        },
+        {
+            "text":["What is that thing?", "It seems angry."],
+            "save_progress_name":"tutorial_3"
+        }
+    ]
+}

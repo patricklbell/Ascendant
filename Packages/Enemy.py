@@ -267,7 +267,6 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         if (self.position - player_position).length() < self.alert_distance:
             self.state = "alert"
             self.attack_position = player_position
-            print("alerted")
         else:
             self.state = "idle"
             self.og_position = self.position
@@ -318,7 +317,7 @@ class FlyingEnemy(Sprite.AnimatedSprite):
             generous_collider = self.collider.inflate(1.2,1.2)
             collision = generous_collider.collidelist(attack_colliders)
             if not collision == -1:
-                self.play_animation("death")
+                self.play_animation("death", on_animation_end=lambda self: self.update_state(state="dead"), on_animation_interrupt=lambda self: self.update_state(state="dead"))
                 self.state = "death"
                 is_damaged = True
 

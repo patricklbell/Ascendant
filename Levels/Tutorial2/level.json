@@ -1,0 +1,62 @@
+{
+    "layers":[
+        {
+            "filename":"Background.png",
+            "depth":-3,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Midground.png",
+            "depth":-2,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Frontground.png",
+            "depth":-1,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Foreground.png",
+            "depth":1,
+            "parallaxX":1,
+            "parallaxY":1
+        }
+    ],
+    "entities":{
+        "filename":"entities.json"
+    },
+    "level_transition": [
+        {
+            "to_level": "Tutorial1",
+            "to_transition": 1,
+            "direction": "W"
+        },
+        {
+            "to_level": "Tutorial1",
+            "to_transition": 2,
+            "direction": "W"
+        }
+    ],
+    "particles":{
+        "likelihood":0.05,
+        "min_velocity":[-10, -2],
+        "max_velocity":[10, 0],
+        "colors":[
+            [106, 190, 48, 255], [143, 151, 74, 255], [153, 229, 80, 255], [95, 143, 110, 255]
+        ],
+        "max":60
+    },
+    "dialog":[
+        {
+            "text":["Press Z to attack", "Try pressing the arrow keys in different directions while attacking"],
+            "save_progress_name":"tutorial_4"
+        },
+        {
+            "text":["If you press down and attack in the air you can down slash", "Try down slashing off the spikes"],
+            "save_progress_name":"tutorial_5"
+        }
+    ]
+}
