@@ -30,14 +30,14 @@
     },
     "level_transition": [
         {
-            "to_level": 0,
-            "to_transition": 0,
-            "direction": 3
+            "to_level": "Tutorial1",
+            "to_transition": 2,
+            "direction": "E"
         },
         {
-            "to_level": 3,
+            "to_level": "Subterranean1",
             "to_transition": 1,
-            "direction": 1
+            "direction": "W"
         }
     ],
     "particles":{
@@ -48,11 +48,5 @@
             [106, 190, 48, 255], [143, 151, 74, 255], [138, 111, 48, 255], [153, 229, 80, 255], [95, 143, 110, 255]
         ],
         "max":100
-    },
-    "dialog":[
-        {
-            "text":["What is this place?", "How did I get here?", "Page 3, perhaps?"],
-            "save_progress_name":"test_text_box"
-        }
-    ]
+    }
 }

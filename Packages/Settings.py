@@ -42,7 +42,7 @@ def init():
         "title_info": {
             "percentage_completion": 0.0
         },
-        "save_level":1,
+        "save_level":"Tutorial1",
         "dialog_completion":{
 
         },
@@ -71,7 +71,7 @@ def init():
                 "down": "down",
                 "dialog": "enter"
             },
-            "resolution": "820x460",
+            "resolution": "720x400",
             "music":True,
             "sound_effects":True
         }
@@ -101,7 +101,7 @@ def init():
     window_rect = get_window_rect()
 
     clock = pygame.time.Clock()
-    camera = Camera.Camera(position=pygame.Vector2(-1000,-400), max_move_speed=30, contraints_min=pygame.Vector2(0,0))
+    camera = Camera.Camera(position=pygame.Vector2(-1000,-400), max_move_speed=30, max_offset=pygame.Vector2(0.05,0.05), contraints_min=pygame.Vector2(0,0), scale=(2,2))
     
     # Setup GUI
     global gui_manager, gui

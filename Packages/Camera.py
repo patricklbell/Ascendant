@@ -2,7 +2,7 @@ import pygame, copy
 
 class Camera():
     """ """
-    def __init__(self, position=pygame.Vector2(0,0), max_move_speed=10, min_move_speed=1, max_offset=pygame.Vector2(0.1, 0.1), contraints_max=pygame.Vector2(2880, 300), contraints_min=pygame.Vector2(0, 0)):
+    def __init__(self, position=pygame.Vector2(0,0), max_move_speed=10, min_move_speed=1, max_offset=pygame.Vector2(0.1, 0.1), contraints_max=pygame.Vector2(2880, 300), contraints_min=pygame.Vector2(0, 0), scale=(1,1)):
         """
         
         :param position: (Default value = pygame.Vector2(0,0))
@@ -11,6 +11,7 @@ class Camera():
         :param max_offset: (Default value = pygame.Vector2(0.1, 0.1)) float representing percentage screen size
         :param 
         """
+        self.scale = scale
         self.position = position
         self.contraints_max = contraints_max
         self.contraints_min = contraints_min
@@ -28,7 +29,7 @@ class Camera():
         """
         previous_position = copy.deepcopy(self.position)
         focus_position = focus_position + self.position
-        win_width,win_height = surface.get_width(), surface.get_height()
+        win_width,win_height = surface.get_width()/self.scale[0], surface.get_height()/self.scale[1]
         
         if focus_position.x > win_width * (0.5+self.max_offset.x):
             deviation = ( focus_position.x - win_width*(0.5+self.max_offset.x) ) / ( win_width*(0.5-self.max_offset.x) )
@@ -53,7 +54,7 @@ class Camera():
         :param surface: 
 
         """
-        win_width,win_height = surface.get_width(), surface.get_height()
+        win_width,win_height = surface.get_width()/self.scale[0], surface.get_height()/self.scale[1]
         
         new_x = -focus_position.x + 0.5*win_width
         self.position.x = min(max(new_x, -self.contraints_max.x+win_width), -self.contraints_min.x)

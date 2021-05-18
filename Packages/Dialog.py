@@ -1,7 +1,6 @@
 import pygame
-import pygame_gui
 import textboxify
-from Packages import Settings, Sprite
+from Packages import Settings
 
 
 class Dialog():
@@ -27,8 +26,8 @@ class Dialog():
             (3/4) - 2*Settings.RESOLUTION[0]/9,
             lines=2,
             pos=(1/2*(Settings.RESOLUTION[0] - (Settings.RESOLUTION[0]*(
-                3/4) - 2*Settings.RESOLUTION[0]/9)), Settings.RESOLUTION[1]*(3/20)),
-            padding=(Settings.RESOLUTION[0]/9, Settings.RESOLUTION[0]/9),
+                3/4) - 2*Settings.RESOLUTION[0]/11)), Settings.RESOLUTION[1]*(3/20)),
+            padding=(Settings.RESOLUTION[0]/11, Settings.RESOLUTION[0]/11),
             font_color=(255, 255, 255),
             font_size=20,
             bg_color=(0, 0, 0),

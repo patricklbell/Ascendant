@@ -21,10 +21,10 @@ class Gui():
         self.title_animation.play_animation("loop", loop=-1)
 
         self.health_bar = Sprite.AnimatedSprite(
-            spritesheet_json_filename=health_spritesheet_filename, spritesheet_scale=(3, 3))
+            spritesheet_json_filename=health_spritesheet_filename, spritesheet_scale=(2, 2))
         self.health_bar.play_animation("idle", loop=True)
         self.health_outline = Sprite.ImageSprite(
-            health_sprite_filename, scale=(3, 3))
+            health_sprite_filename, scale=(2, 2))
         self.health_outline.z = 2
         self.save_sprite = Sprite.ImageSprite(
             save_sprite_filename, scale=(1, 1))
@@ -296,7 +296,7 @@ class Gui():
                                                            manager=Settings.gui_manager,
                                                            ),
                 "resolution_label": pygame_gui.elements.UILabel(
-                    text="RESOLUTION",
+                    text="ASPECT RATIO",
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/6+vertical_gap), (200, vertical_height)),
                     object_id="#small_label",
@@ -305,9 +305,10 @@ class Gui():
                 "resolution": pygame_gui.elements.UIDropDownMenu(
                     # options_list=["1120x315","808x342","772x433", "592x370", "660x495"],
                     # options_list=["1280x360","850x360","820x460", "640x400", "700x525"],
-                    options_list=["1100x300", "800x340",
-                                  "770x430", "600x380", "660x500"],
-                    starting_option=Settings.RESOLUTION_STR,
+                    # options_list=["1100x300", "800x340","770x430", "600x380", "660x500"],*0.8
+                    # options_list=["880x240", "640x270","620x340", "480x300", "530x400"],
+                    options_list=["11:3", "21:9","16:9", "16:10", "4:3"],
+                    starting_option=["11:3", "21:9","16:9", "16:10", "4:3"][["1100x300", "800x340","770x430", "600x380", "660x500"].index(Settings.RESOLUTION_STR)],
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2, Settings.RESOLUTION[1]/6+vertical_gap), (140, vertical_height)),
                     manager=Settings.gui_manager,
@@ -396,7 +397,7 @@ class Gui():
         else:
             health_crop = 16 + int(42*health_fraction)
         self.health_bar.render(surface, (10, 10),
-                               size=(0, 0, health_crop*3, 17*3), delta=delta)
+                               size=(0, 0, health_crop*2, 17*2), delta=delta)
         dirty_rects += self.health_outline.render(
             surface, pygame.Vector2(10, 10))
 
@@ -434,6 +435,8 @@ class Gui():
                     elif event.ui_element == self.menus["title_settings"]["save"]:
                         self.set_state("title")
 
+                        new_resolution = ["1100x300", "800x340","770x430", "600x380", "660x500"][["11:3", "21:9","16:9", "16:10", "4:3"].index(self.menus["title_settings"]["resolution"].selected_option)]
+
                         # Update settings
                         Settings.USER_SETTINGS["music_volume"] = self.menus["title_settings"]["music_volume"].get_current_value(
                         )
@@ -455,10 +458,10 @@ class Gui():
                             else:
                                 sound.SetVolume(0)
 
-                        if (not Settings.USER_SETTINGS["resolution"] == self.menus["title_settings"]["resolution"].selected_option) or (not Settings.is_fullscreen == Settings.USER_SETTINGS["fullscreen"]):
+                        if (not Settings.USER_SETTINGS["resolution"] == new_resolution) or (not Settings.is_fullscreen == Settings.USER_SETTINGS["fullscreen"]):
                             restart = True
 
-                        Settings.USER_SETTINGS["resolution"] = self.menus["title_settings"]["resolution"].selected_option
+                        Settings.USER_SETTINGS["resolution"] = new_resolution
                         try:
                             with open(Settings.USER_SETTINGS_PATH, 'w') as file:
                                 json.dump(Settings.USER_SETTINGS, file)

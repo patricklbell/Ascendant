@@ -30,14 +30,9 @@
     },
     "level_transition": [
         {
-            "to_level": 1,
+            "to_level": "FactoryEntry",
             "to_transition": 0,
-            "direction": 2
-        },
-        {
-            "to_level": 2,
-            "to_transition": 0,
-            "direction": 3
+            "direction": "E"
         }
     ],
     "particles":{

@@ -1,12 +1,12 @@
-import os, subprocess, tempfile, json, sys
+import os, subprocess, tempfile, json
 import xml.etree.ElementTree as ET
 
 SRC_DIRECTORY = os.path.join(os.path.dirname(os.path.dirname(__file__)), "")
 TMX_RASTERIZER = f"{SRC_DIRECTORY}.tools\\Tiled\\tmxrasterizer.exe"
 IMAGE_TO_ENTITIES = f"{SRC_DIRECTORY}.tools\\image_to_entities\\image_to_entities.exe"
 
-def proccess_indexed_level(i):
-    level_file = f"{SRC_DIRECTORY}Level{i}\\level{i}.tmx"
+def proccess_level_directory(name):
+    level_file = f"{name}\\level.tmx"
     print(level_file)
     level_data = ET.parse(level_file).getroot()
     for group in level_data.findall("group"):
@@ -35,7 +35,7 @@ def proccess_indexed_level(i):
                     print(*[IMAGE_TO_ENTITIES, tmp_lyr_fname])
             
             # Write entities file
-            json_fname = f"{SRC_DIRECTORY}Level{i}\\entities.json"
+            json_fname = f"{name}\\entities.json"
             with open(json_fname, 'w') as f:
                 json.dump(entities, f)
 
@@ -43,18 +43,12 @@ def proccess_indexed_level(i):
             args = ["--ignore-visibility"]
             for lyr_name in lyr_names:
                 args += ["--show-layer", lyr_name]
-            output = subprocess.call([TMX_RASTERIZER, level_file, f"{SRC_DIRECTORY}Level{i}\\{grp_name}.png"]+args)
+            output = subprocess.call([TMX_RASTERIZER, level_file, f"{name}\\{grp_name}.png"]+args)
             if not output == 0:
                 print("Error rasterising with command: ")
-                print(*([TMX_RASTERIZER, level_file, f"{SRC_DIRECTORY}Level{i}\\{grp_name}.png"] + args), sep=" ")
+                print(*([TMX_RASTERIZER, level_file, f"{name}\\{grp_name}.png"] + args), sep=" ")
 
-to_process = []
-if len(sys.argv) > 1:
-    for i in sys.argv[1:]:
-        proccess_indexed_level(int(i))
-
-else:
-    i = 0
-    while os.path.exists(f"{SRC_DIRECTORY}Level{i}\\level{i}.tmx"):
-        proccess_indexed_level(i)
-        i+= 1
+if __name__ == "__main__":
+    for name in [x[0] for x in os.walk(".")]:
+        if len(name) > 1 and not name[2] == ".":
+            proccess_level_directory(name)

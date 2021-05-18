@@ -16,24 +16,24 @@ def init():
         should_load=False,
         player_base=Player.Player(
             spritesheet_json_filename=Settings.SRC_DIRECTORY+"Entities/Player/player_spritesheet.json",
-            spritesheet_scale=(2,2),
-            collider_offset = pygame.Vector2(57, 60),
-            collider_size = pygame.Vector2(14, 34),
-            gravity = pygame.Vector2(0,1700),
-            walk_speed=200,
-            water_walk_speed=140,
-            jump_speed=-350,
-            jump_add_speed=-1600,
+            spritesheet_scale=(1.75,1.75),
+            collider_offset = pygame.Vector2(57*0.875, 60*0.875),
+            collider_size = pygame.Vector2(14*0.875, 34*0.875),
+            gravity = pygame.Vector2(0,1500),
+            walk_speed=150,
+            water_walk_speed=120,
+            jump_speed=-300,
+            jump_add_speed=-1200,
             jump_add_max_time=0.3,
             jump_grace_frames=4,
-            knockback_speed=pygame.Vector2(500, 700),
+            knockback_speed=pygame.Vector2(200, 500),
             damage_knockback_speed=100,
-            attack0_length=34,
-            attack1_length=35,
-            attack2_length=15,
-            attack0_width=15,
-            attack1_width=50,
-            attack2_width=50,
+            attack0_length=34*0.875,
+            attack1_length=35*0.875,
+            attack2_length=15*0.875,
+            attack0_width=15*0.875,
+            attack1_width=50*0.875,
+            attack2_width=50*0.875,
             hearts=Settings.PLAYER_HEARTS,
             iframes=90,
             calculate_flip=True,
@@ -47,22 +47,23 @@ def init():
         ),
         enemy_base=Enemy.Enemy(
             spritesheet_json_filename=Settings.SRC_DIRECTORY+"Entities/Enemy0/enemy0_spritesheet.json",
-            spritesheet_scale=(2,2),
-            collider_offset = pygame.Vector2(57, 60),
-            collider_size = pygame.Vector2(14, 34),
-            weapons_collider_size = pygame.Vector2(40, 34),
-            weapons_collider_offset = pygame.Vector2(17, 60),
-            gravity = pygame.Vector2(0,1800),
-            walk_speed=60, 
-            alert_distance=150,
+            spritesheet_scale=(1.75,1.75),
+            collider_offset = pygame.Vector2(57*0.875, 60*0.875),
+            collider_size = pygame.Vector2(14*0.875, 34*0.875),
+            weapons_collider_size = pygame.Vector2(40*0.875, 34*0.875),
+            weapons_collider_offset = pygame.Vector2(17*0.875, 60*0.875),
+            gravity = pygame.Vector2(0,1600),
+            walk_speed=50, 
+            alert_distance=110,
             calculate_flip=True,
         ),
         flying_enemy_base=Enemy.FlyingEnemy(
             spritesheet_json_filename=Settings.SRC_DIRECTORY+"Entities/Enemy1/enemy1_spritesheet.json",
-            spritesheet_scale=(2,2),
-            collider_offset = pygame.Vector2(50, 50),
-            collider_size = pygame.Vector2(24, 24),
+            spritesheet_scale=(1.75,1.75),
+            collider_offset = pygame.Vector2(50*0.875, 50*0.875),
+            collider_size = pygame.Vector2(24*0.875, 24*0.875),
             max_drift_distance = 15,
+            alert_distance = 110,
             drift_speed = 3,
             calculate_flip=True,
         ),
@@ -181,7 +182,7 @@ def gameloop():
                 state_changes = level.player.physics_process(1/60, physical_colliders, damage_colliders, level.get_hitable_colliders(), level.get_death_colliders(), level.get_save_colliders(), level.get_water_colliders(), level.transitions, hit_occured, not is_dialog)
                 if state_changes["respawn"]:
                     def end_animation(self):
-                        level.load_level(level_num=level.save_level)
+                        level.load_level(level_name=level.save_level)
                         level.player.hearts = Settings.PLAYER_HEARTS
                         level.player.play_animation("unsit", speed=0.5)
                     level.player.play_animation("death", on_animation_end=end_animation)
@@ -196,7 +197,7 @@ def gameloop():
                     if should_save:
                         Settings.gui.save_animation.play_animation("base")
                         level.player.hearts = Settings.PLAYER_HEARTS
-                        level.save_level = level.level_num
+                        level.save_level = level.level_name
                         level.save_dialog_completion = copy.deepcopy(level.dialog_completion)
                         level.save_game()
                 else:
@@ -233,6 +234,7 @@ def gameloop():
             # Ingame Gui rendering
             Settings.gui.render_ingame(dt, Settings.surface, level.player, Settings.camera.position)
 
+
             # Handle screen fade transition
             if transition_frames > 0:
                 transition_frames -= 1
@@ -240,17 +242,25 @@ def gameloop():
                 Settings.surface.fill((0,0,0,alpha))
                 if transition_frames == 0:
                     if not level.player.transition == None:
-                        level.load_level(level_num=level.player.transition["to_level"], transition=level.player.transition)
+                        level.load_level(level_name=level.player.transition["to_level"], transition=level.player.transition)
                     untransition_frames = Settings.TRANSITION_MAX_FRAMES
             if untransition_frames > 0:
                 untransition_frames -= 1
                 alpha = (untransition_frames / Settings.TRANSITION_MAX_FRAMES)*255
                 Settings.surface.fill((0,0,0,alpha), special_flags=pygame.BLEND_RGBA_SUB)
 
+            # Scale game rendering
+            Settings.true_surface.blit(pygame.transform.scale(Settings.surface, (int(Settings.true_surface.get_rect().size[0]*Settings.camera.scale[0]), int(Settings.true_surface.get_rect().size[1]*Settings.camera.scale[1]))), 
+                (0, 0)
+            )
+            Settings.surface.fill((0,0,0,0))
+            for dialogue_box in level.dialog_boxes:
+                dialogue_box.render(Settings.surface)
+
         Settings.gui.render(Settings.surface, Settings.camera.position, dt)
         Settings.gui_manager.draw_ui(Settings.surface)
 
-        # Scale to true display
+        # Scale gui rendering
         Settings.true_surface.blit(pygame.transform.scale(Settings.surface, Settings.true_surface.get_rect().size), (0, 0))
         debug_console.console.show(Settings.true_surface)
 

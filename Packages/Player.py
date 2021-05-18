@@ -40,7 +40,7 @@ class Player(Sprite.AnimatedSprite):
         # Other
         self.hearts = kwargs.get("hearts", 3)
         self.iframe_length = kwargs.get("iframes", 120)
-        self.transition_max_frames = kwargs.get("transition_frames", 120)
+        self.transition_max_frames = kwargs.get("transition_frames", 100)
         self.transition_frames = 0
         self.transition = None
         self.water_splash_json_filename = kwargs.get("water_splash_json_filename", None)
@@ -165,19 +165,19 @@ class Player(Sprite.AnimatedSprite):
             if not collision == -1:
                 self.transition = transitions[collision]
                 self.transition_frames = self.transition_max_frames
-                if self.transition["direction"] == "N":
+                if self.transition["direction"] == "S":
                     self.velocity = self.velocity.length() * pygame.Vector2(0,1)
                     Settings.SOUND_EFFECTS["jump"].Play(fade_in_ms=200)
                     self.play_animation("idle")
-                elif self.transition["direction"] == "S":
+                elif self.transition["direction"] == "N":
                     self.velocity = self.velocity.length() * pygame.Vector2(0,-1)
                     Settings.SOUND_EFFECTS["falling"].Play(fade_in_ms=200)
                     self.play_animation("idle")
-                elif self.transition["direction"] == "E":
+                elif self.transition["direction"] == "W":
                     self.constant_velocity = pygame.Vector2(-self.walk_speed, 0)
                     self.play_animation("walk")
                     Settings.SOUND_EFFECTS["run"].Play(fade_in_ms=200)
-                elif self.transition["direction"] == "W":
+                elif self.transition["direction"] == "E":
                     self.constant_velocity = pygame.Vector2(self.walk_speed, 0)
                     Settings.SOUND_EFFECTS["run"].Play(fade_in_ms=200)
                     self.play_animation("walk")

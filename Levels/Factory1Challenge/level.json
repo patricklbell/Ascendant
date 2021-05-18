@@ -30,18 +30,24 @@
     },
     "level_transition": [
         {
-            "to_level": 0,
+            "to_level": "Factory1",
             "to_transition": 0,
-            "direction": 0
+            "direction": "S"
         }
     ],
     "particles":{
-        "likelihood":0.05,
-        "min_velocity":[5, -2],
-        "max_velocity":[50, 2],
+        "likelihood":0.1,
+        "min_velocity":[0, 0],
+        "max_velocity":[5, 5],
         "colors":[
             [33, 48, 34,255], [30,30,30,255], [69, 61, 51,255], [199,199,199,255], [48,48,48,255]
         ],
-        "max":100
-    }
+        "max":20
+    },
+    "dialog":[
+        {
+            "text":["Whatever manner of creature created this place is long gone", "And their secrets with them"],
+            "save_progress_name":"lore_3"
+        }
+    ]
 }

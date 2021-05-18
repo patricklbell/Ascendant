@@ -264,14 +264,15 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         :param state:  (Default value = None)
 
         """
-        if (self.position - player_position).length() < self.alert_distance:
-            self.state = "alert"
-            self.attack_position = player_position
-        else:
-            self.state = "idle"
-            self.og_position = self.position
         if not state is None:
             self.state = state
+        else:
+            if (self.position - player_position).length() < self.alert_distance:
+                self.state = "alert"
+                self.attack_position = player_position
+            else:
+                self.state = "idle"
+                self.og_position = self.position
 
     def physics_process(self, delta, colliders = None, player_position=None, attack_colliders=None):
         """
@@ -291,7 +292,7 @@ class FlyingEnemy(Sprite.AnimatedSprite):
             self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
             self.velocity += pygame.Vector2(self.attack_position - self.position).normalize() * self.attack_speed
             self.position += self.velocity * delta
-        else:
+        elif not self.state == "death":
             rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100)/100
             rand_vel_y = random.randrange(-self.drift_speed*100, self.drift_speed*100)/100
             self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
@@ -358,7 +359,7 @@ class FlyingEnemy(Sprite.AnimatedSprite):
                     
     def get_damage_colliders(self):
         """ """
-        if self.state != "death":
+        if not self.state == "death":
             return [self.collider]
         return []
     

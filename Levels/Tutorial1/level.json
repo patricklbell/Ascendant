@@ -3,13 +3,13 @@
         {
             "filename":"Background.png",
             "depth":-3,
-            "parallaxX":0.95,
+            "parallaxX":1,
             "parallaxY":1
         },
         {
             "filename":"Midground.png",
             "depth":-2,
-            "parallaxX":0.98,
+            "parallaxX":1,
             "parallaxY":1
         },
         {
@@ -31,7 +31,7 @@
     "level_transition": [
         {
             "to_level": "FactoryEntry",
-            "to_transition": 1,
+            "to_transition": 2,
             "direction": "N"
         },
         {
@@ -60,7 +60,7 @@
             "save_progress_name":"tutorial_6"
         },
         {
-            "text":["Who am I?", "I seek the light", "Use <- and -> to move"],
+            "text":["Who am I?", "Use the arrow keys to move"],
             "save_progress_name":"tutorial_1"
         },
         {
@@ -68,7 +68,7 @@
             "save_progress_name":"tutorial_2"
         },
         {
-            "text":["What is that thing?", "It seems angry."],
+            "text":["I must find the light", "Up, up..."],
             "save_progress_name":"tutorial_3"
         }
     ]
