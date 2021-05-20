@@ -56,15 +56,15 @@
     },
     "dialog":[
         {
-            "text":["Why do they attack me?", "Perhaps my sword can defeat them."],
+            "text":["Why do they attack me?", "...$name, perhaps your sword can defeat them..."],
             "save_progress_name":"tutorial_6"
         },
         {
-            "text":["Who am I?", "Use the arrow keys to move"],
+            "text":["Who am I?", "...$name, use your arrow keys to move..."],
             "save_progress_name":"tutorial_1"
         },
         {
-            "text":["Use space to jump"],
+            "text":["...$name, use space to move..."],
             "save_progress_name":"tutorial_2"
         },
         {

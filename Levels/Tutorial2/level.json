@@ -51,11 +51,11 @@
     },
     "dialog":[
         {
-            "text":["Press Z to attack", "Try pressing the arrow keys in different directions while attacking"],
+            "text":["...$name try pressing Z to attack...", "...$name try pressing the arrow keys in different directions while attacking..."],
             "save_progress_name":"tutorial_4"
         },
         {
-            "text":["If you press down and attack in the air you can down slash", "Try down slashing off the spikes"],
+            "text":["...$name, press down and attack in the air to down slash...", "...Try down slashing off the spikes..."],
             "save_progress_name":"tutorial_5"
         }
     ]

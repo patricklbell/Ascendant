@@ -38,6 +38,11 @@
             "to_level": "Factory2",
             "to_transition": 0,
             "direction": "E"
+        },
+        {
+            "to_level": "FactoryEntry",
+            "to_transition": 1,
+            "direction": "W"
         }
     ],
     "particles":{
