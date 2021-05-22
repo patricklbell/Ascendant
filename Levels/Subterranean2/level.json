@@ -30,7 +30,7 @@
     },
     "level_transition": [
         {
-            "to_level": "Tutorial1",
+            "to_level": "Subterranean3",
             "to_transition": 2,
             "direction": "E"
         },
@@ -48,5 +48,11 @@
             [106, 190, 48, 255], [143, 151, 74, 255], [138, 111, 48, 255], [153, 229, 80, 255], [95, 143, 110, 255]
         ],
         "max":100
-    }
+    },
+    "dialog":[
+        {
+            "text":["I feel a breeze... perhaps there is light ahead."],
+            "save_progress_name":"subterranean2"
+        }
+    ]
 }

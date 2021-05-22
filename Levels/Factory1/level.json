@@ -36,7 +36,7 @@
         },
         {
             "to_level": "Factory2",
-            "to_transition": 0,
+            "to_transition": 1,
             "direction": "E"
         },
         {

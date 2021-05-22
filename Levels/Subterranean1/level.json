@@ -31,8 +31,8 @@
     "level_transition": [
         {
             "to_level": "Factory2",
-            "to_transition": 1,
-            "direction": "N"
+            "to_transition": 0,
+            "direction": "W"
         },
         {
             "to_level": "Subterranean2",

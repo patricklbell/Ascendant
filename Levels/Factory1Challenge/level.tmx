@@ -484,7 +484,7 @@
 </data>
   </layer>
  </group>
- <group id="15" name="Entities" visible="0">
+ <group id="15" name="Entities">
   <layer id="28" name="dialog" width="59" height="39" tintcolor="#2cc5b8">
    <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

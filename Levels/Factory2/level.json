@@ -30,14 +30,14 @@
     },
     "level_transition": [
         {
+            "to_level": "Subterranean1",
+            "to_transition": 0,
+            "direction": "E"
+        },
+        {
             "to_level": "Factory1",
             "to_transition": 1,
             "direction": "W"
-        },
-        {
-            "to_level": "Subterranean1",
-            "to_transition": 0,
-            "direction": "S"
         }
     ],
     "particles":{

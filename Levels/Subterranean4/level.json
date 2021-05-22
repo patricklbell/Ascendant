@@ -1,0 +1,66 @@
+{
+    "layers":[
+        {
+            "filename":"Background.png",
+            "depth":-3,
+            "parallaxX":0.8,
+            "parallaxY":1
+        },
+        {
+            "filename":"Midground.png",
+            "depth":-2,
+            "parallaxX":0.9,
+            "parallaxY":1
+        },
+        {
+            "filename":"Frontground.png",
+            "depth":-1,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Foreground.png",
+            "depth":1,
+            "parallaxX":1,
+            "parallaxY":1
+        }
+    ],
+    "entities":{
+        "filename":"entities.json"
+    },
+    "level_transition": [
+        {
+            "to_level": "Tutorial1",
+            "to_transition": 2,
+            "direction": "E"
+        },
+        {
+            "to_level": "Subterranean1",
+            "to_transition": 1,
+            "direction": "W"
+        }
+    ],
+    "particles":{
+        "likelihood":0.1,
+        "min_velocity":[-1, -10],
+        "max_velocity":[1, -50],
+        "colors":[
+            [255,255,255,255],[106, 190, 48, 255], [153, 229, 80, 255], [95, 143, 110, 255]
+        ],
+        "max":300
+    },
+    "dialog":[
+        {
+            "text":["...I will ascend..."],
+            "save_progress_name":"subterranean4_2"
+        },
+        {
+            "text":["Light shines the way"],
+            "save_progress_name":"subterranean4_1"
+        },
+        {
+            "text":["I sense this is the end"],
+            "save_progress_name":"subterranean4_0"
+        }
+    ]
+}

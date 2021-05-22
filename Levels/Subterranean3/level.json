@@ -1,0 +1,57 @@
+{
+    "layers":[
+        {
+            "filename":"Background.png",
+            "depth":-3,
+            "parallaxX":0.8,
+            "parallaxY":1
+        },
+        {
+            "filename":"Midground.png",
+            "depth":-2,
+            "parallaxX":0.9,
+            "parallaxY":1
+        },
+        {
+            "filename":"Frontground.png",
+            "depth":-1,
+            "parallaxX":1,
+            "parallaxY":1
+        },
+        {
+            "filename":"Foreground.png",
+            "depth":1,
+            "parallaxX":1,
+            "parallaxY":1
+        }
+    ],
+    "entities":{
+        "filename":"entities.json"
+    },
+    "level_transition": [
+        {
+            "to_level": "SubterraneanChallenge",
+            "to_transition": 0,
+            "direction": "N"
+        },
+        {
+            "to_level": "Subterranean2",
+            "to_transition": 0,
+            "direction": "W"
+        },
+        {
+            "to_level": "Subterranean4",
+            "to_transition": 1,
+            "direction": "E"
+        }
+    ],
+    "particles":{
+        "likelihood":0.05,
+        "min_velocity":[5, -1],
+        "max_velocity":[50, 3],
+        "colors":[
+            [255,255,255,255],[106, 190, 48, 255], [153, 229, 80, 255], [95, 143, 110, 255]
+        ],
+        "max":100
+    }
+}
