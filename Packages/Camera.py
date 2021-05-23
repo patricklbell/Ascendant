@@ -32,17 +32,17 @@ class Camera():
         win_width,win_height = surface.get_width()/self.scale[0], surface.get_height()/self.scale[1]
         
         if focus_position.x > win_width * (0.5+self.max_offset.x):
-            deviation = ( focus_position.x - win_width*(0.5+self.max_offset.x) ) / ( win_width*(0.5-self.max_offset.x) )
+            deviation = focus_position.x / ( win_width*(0.5+self.max_offset.x) ) - 1
             self.position.x = max(self.position.x - max(self.max_speed*deviation, self.min_speed), -self.contraints_max.x+win_width)
         if focus_position.x < win_width * (0.5-self.max_offset.x):
-            deviation = ( (win_width*(0.5-self.max_offset.x) - focus_position.x) ) / ( win_width*(0.5-self.max_offset.x) )
+            deviation = 1 - focus_position.x / ( win_width*(0.5-self.max_offset.x) )
             self.position.x = min(self.position.x + max(self.max_speed*deviation, self.min_speed), -self.contraints_min.x)
         
         if focus_position.y > win_height * (0.5+self.max_offset.y):
-            deviation = ( focus_position.y - win_height*(0.5+self.max_offset.y) ) / ( win_height*(0.5-self.max_offset.y) )
+            deviation = focus_position.y / ( win_height*(0.5+self.max_offset.y) ) - 1
             self.position.y = max(self.position.y - max(self.max_speed*deviation, self.min_speed), -self.contraints_max.y+win_height)
         if focus_position.y < win_height * (0.5-self.max_offset.y):
-            deviation = ( (win_height*(0.5-self.max_offset.y) - focus_position.y) ) / ( win_height*(0.5-self.max_offset.y) )
+            deviation = 1 - focus_position.y / ( win_height*(0.5-self.max_offset.y) )
             self.position.y = min(self.position.y + max(self.max_speed*deviation, self.min_speed), -self.contraints_min.y)
 
         return not previous_position == self.position

@@ -34,7 +34,7 @@ def init():
     global DEBUG, TRANSITION_MAX_FRAMES, DEBUG_DIRTY_RECTS, PLAYER_HEARTS, SELECTED_SAVE, DEFAULT_SAVE, CACHE
     PLAYER_HEARTS = 5
     TRANSITION_MAX_FRAMES = 30
-    DEBUG = True
+    DEBUG = False
     CACHE = True
     DEBUG_DIRTY_RECTS = False
     SELECTED_SAVE = 0
@@ -101,7 +101,7 @@ def init():
     window_rect = get_window_rect()
 
     clock = pygame.time.Clock()
-    camera = Camera.Camera(position=pygame.Vector2(-1000,-400), max_move_speed=30, max_offset=pygame.Vector2(0.05,0.05), contraints_min=pygame.Vector2(0,0), scale=(2,2))
+    camera = Camera.Camera(position=pygame.Vector2(-1000,-400), max_move_speed=30, max_offset=pygame.Vector2(0.1,0.02), contraints_min=pygame.Vector2(0,0), scale=(2,2))
     
     # Setup GUI
     global gui_manager, gui

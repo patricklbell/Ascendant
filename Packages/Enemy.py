@@ -222,8 +222,9 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         # Setup state
         self.og_position = pygame.Vector2(0,0)
         self.drift_speed = kwargs.get("drift_speed", 10)
-        self.attack_speed = kwargs.get("attack_speed", 10)
-        self.max_speed = kwargs.get("max_speed", 10)
+        self.attack_acceleration = kwargs.get("attack_acceleration", 5)
+        self.max_speed = kwargs.get("max_speed", 200)
+        self.max_attack_speed = kwargs.get("max_attack_speed", 500)
         self.max_drift_distance = kwargs.get("max_drift_distance", 10)
         self.alert_distance = kwargs.get("alert_distance", 100)
         self.attack_position = pygame.Vector2(0,0)
@@ -266,7 +267,7 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         """
         if not state is None:
             self.state = state
-        else:
+        elif not (self.state == "death" or self.state == "dead"):
             if (self.position - player_position).length() < self.alert_distance:
                 self.state = "alert"
                 self.attack_position = player_position
@@ -285,76 +286,81 @@ class FlyingEnemy(Sprite.AnimatedSprite):
         """
         is_damaged = False
         self.flipX = self.velocity.x < 0
+        if not (self.state == "death" or self.state == "dead"):
+            if self.state == "alert":
+                rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100)/1000
+                rand_vel_y = random.randrange(-self.drift_speed*100, self.drift_speed*100)/1000
+                self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
+                self.velocity += pygame.Vector2(self.attack_position - self.position).normalize() * self.attack_acceleration
 
-        if self.state == "alert":
-            rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100)/1000
-            rand_vel_y = random.randrange(-self.drift_speed*100, self.drift_speed*100)/1000
-            self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
-            self.velocity += pygame.Vector2(self.attack_position - self.position).normalize() * self.attack_speed
-            self.position += self.velocity * delta
-        elif not self.state == "death":
-            rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100)/100
-            rand_vel_y = random.randrange(-self.drift_speed*100, self.drift_speed*100)/100
-            self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
+                if self.velocity.length() > self.max_attack_speed:
+                    self.velocity = self.velocity.normalize()*self.max_attack_speed
+                self.position += self.velocity * delta
+            else:
+                rand_vel_x = random.randrange(-self.drift_speed*100, self.drift_speed*100)/100
+                rand_vel_y = random.randrange(-self.drift_speed*100, self.drift_speed*100)/100
+                self.velocity += pygame.Vector2(rand_vel_x, rand_vel_y)
 
-            if self.position.x - self.og_position.x >= self.max_drift_distance:
-                self.velocity.x = min(self.velocity.x, 0)
-            elif self.position.x - self.og_position.x <= -self.max_drift_distance:
-                self.velocity.x = max(self.velocity.x, 0)
-            if self.position.y - self.og_position.y >= self.max_drift_distance:
-                self.velocity.y = min(self.velocity.y, 0)
-            elif self.position.y - self.og_position.y <= -self.max_drift_distance:
-                self.velocity.y = max(self.velocity.y, 0)
-            
-            self.position += self.velocity * delta
+                if self.position.x - self.og_position.x >= self.max_drift_distance:
+                    self.velocity.x = min(self.velocity.x, 0)
+                elif self.position.x - self.og_position.x <= -self.max_drift_distance:
+                    self.velocity.x = max(self.velocity.x, 0)
+                if self.position.y - self.og_position.y >= self.max_drift_distance:
+                    self.velocity.y = min(self.velocity.y, 0)
+                elif self.position.y - self.og_position.y <= -self.max_drift_distance:
+                    self.velocity.y = max(self.velocity.y, 0)
+                
+                if self.velocity.length() > self.max_speed:
+                    self.velocity = self.velocity.normalize()*self.max_speed
+                self.position += self.velocity * delta
 
 
-        self.collider.x = self.position.x + self.collider_offset.x
-        self.collider.y = self.position.y + self.collider_offset.y
+            self.collider.x = self.position.x + self.collider_offset.x
+            self.collider.y = self.position.y + self.collider_offset.y
 
-        # Check for damage events
-        is_damaged = False
-        if not attack_colliders == None:
-            generous_collider = self.collider.inflate(1.2,1.2)
-            collision = generous_collider.collidelist(attack_colliders)
-            if not collision == -1:
-                self.play_animation("death", on_animation_end=lambda self: self.update_state(state="dead"), on_animation_interrupt=lambda self: self.update_state(state="dead"))
-                self.state = "death"
-                is_damaged = True
+            # Check for damage events
+            is_damaged = False
+            if not attack_colliders == None:
+                generous_collider = self.collider.inflate(1.2,1.2)
+                collision = generous_collider.collidelist(attack_colliders)
+                if not collision == -1:
+                    self.play_animation("death", on_animation_end=lambda self: self.update_state(state="dead"), on_animation_interrupt=lambda self: self.update_state(state="dead"))
+                    self.state = "death"
+                    is_damaged = True
 
-        if not colliders == None:
-            for collider in colliders:
-                if self.collider.colliderect(collider):
-                    # Mininmise all translations
-                    push_y = min(
-                        # Consider moving down; Hit the top side
-                        collider.top - self.collider.height - self.collider_offset.y - self.position.y+1,
-                        # Consider moving up; Hit the bottom side
-                        collider.bottom - self.collider_offset.y - self.position.y,
-                        key=abs
-                    )
-                    push_x = min(
-                        # Consider moving right; Hit the left side
-                        collider.left - self.collider.width - self.collider_offset.x - self.position.x,
-                        # Consider moving left; Hit the right side
-                        collider.right - self.collider_offset.x - self.position.x,
-                        key=abs
-                    )
+            if not colliders == None:
+                for collider in colliders:
+                    if self.collider.colliderect(collider):
+                        # Mininmise all translations
+                        push_y = min(
+                            # Consider moving down; Hit the top side
+                            collider.top - self.collider.height - self.collider_offset.y - self.position.y+1,
+                            # Consider moving up; Hit the bottom side
+                            collider.bottom - self.collider_offset.y - self.position.y,
+                            key=abs
+                        )
+                        push_x = min(
+                            # Consider moving right; Hit the left side
+                            collider.left - self.collider.width - self.collider_offset.x - self.position.x,
+                            # Consider moving left; Hit the right side
+                            collider.right - self.collider_offset.x - self.position.x,
+                            key=abs
+                        )
 
-                    # Choose smaller transformation
-                    if abs(push_x) < abs(push_y):
-                        self.position.x = push_x + self.position.x
-                        if push_x > 0:
-                            self.velocity.x = abs(self.velocity.x) / 2
+                        # Choose smaller transformation
+                        if abs(push_x) < abs(push_y):
+                            self.position.x = push_x + self.position.x
+                            if push_x > 0:
+                                self.velocity.x = abs(self.velocity.x) / 2
+                            else:
+                                self.velocity.x = -abs(self.velocity.x) / 2
                         else:
-                            self.velocity.x = -abs(self.velocity.x) / 2
-                    else:
-                        self.position.y = push_y + self.position.y
-                        if push_y > 0:
-                            self.velocity.y = abs(self.velocity.y) / 2
-                        else:
-                            self.velocity.y = -abs(self.velocity.y) / 2
-        self.update_state(player_position)
+                            self.position.y = push_y + self.position.y
+                            if push_y > 0:
+                                self.velocity.y = abs(self.velocity.y) / 2
+                            else:
+                                self.velocity.y = -abs(self.velocity.y) / 2
+            self.update_state(player_position)
         return is_damaged
                     
     def get_damage_colliders(self):

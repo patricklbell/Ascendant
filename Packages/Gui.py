@@ -27,9 +27,9 @@ class Gui():
             health_sprite_filename, scale=(2, 2))
         self.health_outline.z = 2
         self.save_sprite = Sprite.ImageSprite(
-            save_sprite_filename, scale=(1, 1))
+            save_sprite_filename, scale=(1,1))
         self.save_animation = Sprite.AnimatedSprite(
-            spritesheet_json_filename=save_animation_filename, position=pygame.Vector2(0, Settings.RESOLUTION[1]-64))
+            spritesheet_json_filename=save_animation_filename, position=pygame.Vector2(0, Settings.RESOLUTION[1]/2-32), spritesheet_scale=(0.5, 0.5))
 
         vertical_gap, vertical_height = 40, 30
         self.completions = []

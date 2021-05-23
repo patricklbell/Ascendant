@@ -20,8 +20,8 @@
             "y_size":64,
             "x_offset":64,
             "y_offset":0,
-            "time":0.450,
-            "frame_length":8
+            "time":0.420,
+            "frame_length":7
         },
         {
             "name":"attack2",

@@ -1,12 +1,13 @@
 import pygame
 import textboxify
 from Packages import Settings
+from string import Template
 
 
 class Dialog():
     """ """
 
-    def __init__(self, pages, collider, save_progress_name):
+    def __init__(self, pages, collider, save_progress_name, player_name):
         self.collider = collider
         self.spn = save_progress_name
 
@@ -18,10 +19,11 @@ class Dialog():
         self.has_activated = False
 
     def __construct_box(self, text):
+        self.template = Template(text)
         self.dialog_box = textboxify.TextBoxFrame(
             border=textboxify.borders.LIGHT,
             font_name="arial",
-            text=text,
+            text=self.template.safe_substitute(name="example"),
             text_width=Settings.RESOLUTION[0] *
             (3/4) - 2*Settings.RESOLUTION[0]/9,
             lines=2,
@@ -34,13 +36,14 @@ class Dialog():
         )
         self.dialog_box.set_indicator()
 
-    def activate(self):
+    def activate(self, player_name):
         """ """
         if not self.dialog_group:
             self.dialog_group.add(self.dialog_box)
+        self.dialog_box.set_text(self.template.safe_substitute(name=player_name))
         self.has_activated = True
 
-    def update(self, level, player_collider):
+    def update(self, level, player_collider, player_name):
         """
 
         :param level: 
@@ -51,12 +54,12 @@ class Dialog():
             (self.spn not in level.save_dialog_completion) or (
                 not level.save_dialog_completion[self.spn])
         ):
-            self.activate()
+            self.activate(player_name)
             level.dialog_completion[self.spn] = True
             return True
         return self.dialog_group
 
-    def process_events(self, events):
+    def process_events(self, events, player_name):
         """
 
         :param events: 
@@ -78,7 +81,7 @@ class Dialog():
                             if self.page_index < len(self.pages):
                                 self.__construct_box(
                                     self.pages[self.page_index])
-                                self.activate()
+                                self.activate(player_name)
 
             self.dialog_box.update()
 

@@ -23,6 +23,7 @@ class Player(Sprite.AnimatedSprite):
         self.jump_grace_max_frames = kwargs.get("jump_grace_frames", 5)
         self.jump_grace_frames = 0
         self.knockback_speed = kwargs.get("knockback_speed", pygame.Vector2(200, 500))
+        self.bounce_speed = kwargs.get("bounce_speed", pygame.Vector2(600, 500))
         self.damage_knockback_speed = kwargs.get("damage_knockback_speed", 10)
 
         # Setup colliders
@@ -89,11 +90,11 @@ class Player(Sprite.AnimatedSprite):
     def get_attack_colliders(self):
         """ """
         if self.can_attack and self.animation_playing:
-            if self.animation_name == "attack0" and self.frame_num >= 5:
+            if self.animation_name == "attack0" and self.frame_num >= 2:
                 inflated = self.collider.inflate(self.attack0_length, self.attack0_width)
                 return [inflated.move( (((not self.flipX)*2) - 1)*(self.attack0_length/2 + self.collider_size.x/2), 0)]
 
-            if self.animation_name == "attack1" and self.frame_num == 4:
+            if self.animation_name == "attack1" and self.frame_num >= 3 and self.frame_num <= 5:
                 inflated = self.collider.inflate(self.attack1_width, self.attack1_length)
                 return [inflated.move(0, -self.attack1_length/2 -self.collider_size.y/2)]
 
@@ -170,7 +171,7 @@ class Player(Sprite.AnimatedSprite):
                     Settings.SOUND_EFFECTS["jump"].Play(fade_in_ms=200)
                     self.play_animation("idle")
                 elif self.transition["direction"] == "N":
-                    self.velocity = self.velocity.length() * pygame.Vector2(0,-1)
+                    self.velocity = max(self.velocity.length(), self.gravity.y/2.5) * pygame.Vector2(0,-1)
                     Settings.SOUND_EFFECTS["falling"].Play(fade_in_ms=200)
                     self.play_animation("idle")
                 elif self.transition["direction"] == "W":
@@ -186,11 +187,12 @@ class Player(Sprite.AnimatedSprite):
             self.transition_frames -= 1
             if self.transition_frames == 0:
                 level_state_changes["transition"] = self.transition
-            if not self.transition == None and (self.transition["direction"] == "E" or self.transition["direction"] == "W"):
+            if not self.transition == None:
                 # Apply forces
                 if not self.velocity == pygame.Vector2(0,0):
                     self.velocity -= self.velocity * delta * self.air_resistance
-                self.velocity += delta * self.gravity
+                if not (self.transition["direction"] == "E" or self.transition["direction"] == "W"):
+                    self.velocity += delta * self.gravity
         else:
             if self.jump_grace_frames > 0:
                 self.jump_grace_frames-=1
@@ -228,12 +230,23 @@ class Player(Sprite.AnimatedSprite):
             
             if hit_occured or collision:
                 self.can_attack = False
-                if self.animation_name == "attack0":
-                    self.velocity.x = (self.flipX*2 - 1)*self.knockback_speed.x
-                elif self.animation_name == "attack1" and not self.is_on_ground:
-                    self.velocity.y = self.knockback_speed.y
-                elif self.animation_name == "attack2":
-                    self.velocity.y = -self.knockback_speed.y
+                if collision:
+                    # Impart upwards velocity in bounce
+                    if self.animation_name == "attack0":
+                        self.velocity.x = (self.flipX*2 - 1)*self.bounce_speed.x
+                        self.velocity.y = -self.bounce_speed.y/2
+                    elif self.animation_name == "attack1" and not self.is_on_ground:
+                        self.velocity.y = self.bounce_speed.y
+                    elif self.animation_name == "attack2":
+                        self.velocity.y = -self.bounce_speed.y
+                # Ensure no double velocity, assumes bounce speed is greater
+                elif hit_occured:
+                    if self.animation_name == "attack0":
+                        self.velocity.x = (self.flipX*2 - 1)*self.knockback_speed.x
+                    elif self.animation_name == "attack1" and not self.is_on_ground:
+                        self.velocity.y = self.knockback_speed.y
+                    elif self.animation_name == "attack2":
+                        self.velocity.y = -self.knockback_speed.y
 
             self.is_white = False
             if not self.iframes == 0 and not self.animation_name == "death":

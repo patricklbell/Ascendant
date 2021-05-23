@@ -359,6 +359,7 @@ class Level():
                         info["text"],
                         pygame.Rect(bounds["x"], bounds["y"], bounds["width"], bounds["height"]),
                         info["save_progress_name"],
+                        self.name
                     ))
         elif Settings.DEBUG:
             print(f"No dialog entity layer found in {self.entities_filename} and/or {self.level_filename}")
@@ -381,7 +382,7 @@ class Level():
             if direction == "S":
                 self.player.velocity.y = -self.player.gravity.y/4
                 self.player.position = pygame.Vector2(
-                    transition_rect.left + self.player.collider_size.x,
+                    transition_rect.left + transition_rect.width - self.player.collider_size.x/2,
                     transition_rect.top,
                 ) - self.player.collider_offset
             elif direction == "N":
@@ -391,18 +392,16 @@ class Level():
                     transition_rect.top,
                 ) - self.player.collider_offset
             elif direction == "W":
-                self.player.transition_frames = self.player.transition_max_frames
                 self.player.velocity.x = self.player.walk_speed
                 self.player.position = pygame.Vector2(
-                    transition_rect.left + transition_rect.width,
-                    transition_rect.top + transition_rect.height*0.5,
+                    transition_rect.left - transition_rect.width + self.player.collider_size.y/2,
+                    transition_rect.top + transition_rect.height - self.player.collider_size.y,
                 ) - self.player.collider_offset
                 self.player.play_animation("walk", loop=True)
             elif direction == "E":
-                self.player.transition_frames = self.player.transition_max_frames
                 self.player.velocity.x = -self.player.walk_speed
                 self.player.position = pygame.Vector2(
-                    transition_rect.left,
+                    transition_rect.left + transition_rect.width - self.player.collider_size.y/2,
                     transition_rect.top + transition_rect.height - self.player.collider_size.y,
                 ) - self.player.collider_offset
                 self.player.play_animation("walk", loop=True)

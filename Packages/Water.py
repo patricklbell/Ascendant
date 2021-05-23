@@ -23,7 +23,7 @@ class Water():
         if not water_rect == None:
             self.tile_from_rect(water_rect)
     
-    def tile_from_rect(self, rect, grass_density=3/4, bubble_density=1/2, bubbly_density=1/4, bubbliest_density=1/6):
+    def tile_from_rect(self, rect, grass_density=3/4, bubble_density=1/6, bubbly_density=1/8, bubbliest_density=1/16):
         """
 
         :param rect: 
