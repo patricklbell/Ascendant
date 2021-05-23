@@ -35,7 +35,7 @@ class Particle():
 
 class Level():
     """ """
-    def __init__(self, should_load=True, level_name=0, save_num=0, position=pygame.Vector2(0,0), player_base=Player.Player(), water_base=Water.Water(), enemy_base=Enemy.Enemy(), flying_enemy_base=Enemy.FlyingEnemy(), toxic_water_base=Water.Water()):
+    def __init__(self, should_load=True, level_name=0, save_num=0, position=pygame.Vector2(0,0), player_base=Player.Player(), water_base=Water.Water(), enemy_base=Enemy.Enemy(), flying_enemy_base=Enemy.FlyingEnemy(), toxic_water_base=Water.Water(), collectable_base=Enemy.ChallengeCollectable()):
         self.position = position
 
         self.sprites_infront = []
@@ -48,8 +48,9 @@ class Level():
         self.toxic_water_base = toxic_water_base
         self.enemy_base = enemy_base
         self.flying_enemy_base = flying_enemy_base
+        self.collectable_base = collectable_base
 
-        self.colliders, self.death_colliders, self.hitable_colliders, self.save_colliders, self.transitions, self.waters, self.water_colliders, self.toxic_waters, self.toxic_water_colliders,  self.enemies = [],[],[],[],[],[],[],[],[],[]
+        self.colliders, self.death_colliders, self.hitable_colliders, self.save_colliders, self.transitions, self.waters, self.water_colliders, self.toxic_waters, self.toxic_water_colliders,  self.enemies, self.collectables = [],[],[],[],[],[],[],[],[],[],[]
         self.dialog_boxes = []
         self.player = player_base.copy()
         self.particles = []
@@ -137,7 +138,7 @@ class Level():
         # Handle particles
         if random.uniform(0, 1) < self.particles_likelihood and len(self.particles) < self.particles_max:
             self.particles += [Particle(
-                pygame.Vector2(0, random.randint(0, self.level_size[1])),
+                pygame.Vector2(random.randint(0, self.level_size[0]), random.randint(0, self.level_size[1])),
                 pygame.Vector2(
                     random.uniform(self.particles_min_velocity[0], self.particles_max_velocity[0]),
                     random.uniform(self.particles_min_velocity[1], self.particles_max_velocity[1])
@@ -190,6 +191,7 @@ class Level():
             self.dialog_completion = json_data["dialog_completion"]
             self.has_begun = json_data["has_begun"]
             self.name = json_data["name"]
+            self.challenges = json_data["challenges"]
             self.load_level(level_name=json_data["save_level"])
         except Exception as e:
             if Settings.DEBUG:
@@ -204,6 +206,7 @@ class Level():
             self.dialog_completion = Settings.DEFAULT_SAVE["dialog_completion"]
             self.has_begun = Settings.DEFAULT_SAVE["has_begun"]
             self.name = Settings.DEFAULT_SAVE["name"]
+            self.challenges = Settings.DEFAULT_SAVE["challenges"]
             self.load_level()
         self.save_dialog_completion = copy.deepcopy(self.dialog_completion)
         self.player.play_animation("unsit")
@@ -216,6 +219,7 @@ class Level():
         save_data["has_begun"] = self.has_begun or not self.save_level == "Tutorial1"
         save_data["save_level"] = self.save_level
         save_data["dialog_completion"] = self.save_dialog_completion
+        save_data["challenges"] = self.challenges
 
         percent_completion = math.floor((len(self.save_dialog_completion) / 24)*1000)/10
         save_data["title_info"]["percentage_completion"] = percent_completion
@@ -329,7 +333,7 @@ class Level():
                 })
         except:
             if Settings.DEBUG:
-                print(f"Failed to load transition entities {self.entities_filename}, and {self.level_filename}")
+                print(f"Failed to load transition entities {self.entities_filename}, and/or {self.level_filename}")
 
         self.waters = []
         self.water_colliders = []
@@ -363,6 +367,7 @@ class Level():
                     ))
         elif Settings.DEBUG:
             print(f"No dialog entity layer found in {self.entities_filename} and/or {self.level_filename}")
+            
 
         self.reset_level()
 
@@ -380,9 +385,10 @@ class Level():
             self.player.transition_frames = self.player.transition_max_frames
 
             if direction == "S":
-                self.player.velocity.y = -self.player.gravity.y/4
+                self.player.velocity.y = -self.player.gravity.y/9.6
+                self.player.velocity.x = self.player.gravity.y/25
                 self.player.position = pygame.Vector2(
-                    transition_rect.left + transition_rect.width - self.player.collider_size.x/2,
+                    transition_rect.left + transition_rect.width - 3*self.player.collider_size.x,
                     transition_rect.top,
                 ) - self.player.collider_offset
             elif direction == "N":
@@ -450,3 +456,16 @@ class Level():
                 self.enemies[-1].og_position = copy.copy(self.enemies[-1].position)
         elif Settings.DEBUG:
             print(f"No flying_enemies entity layer found in {self.entities_filename}")
+        
+        if self.level_name not in self.challenges:
+            self.collectables = []
+            if "collectables" in json_data:
+                for collectable in json_data["collectables"]:
+                    self.collectables.append(self.collectable_base.copy())
+                    self.collectables[-1].position = pygame.Vector2(
+                        collectable["x"] - self.collectable_base.collider_offset.x,
+                        collectable["y"] - self.collectable_base.collider_offset.y,
+                    )
+                    self.collectables[-1].og_position = copy.copy(self.collectables[-1].position)
+            elif Settings.DEBUG:
+                print(f"No collectables entity layer found in {self.entities_filename}")

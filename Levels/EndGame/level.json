@@ -1,0 +1,29 @@
+{
+    "layers":[
+        {
+            "filename":"Background.png",
+            "depth":-1,
+            "parallaxX":1,
+            "parallaxY":1
+        }
+    ],
+    "entities":{
+        "filename":"entities.json"
+    },
+    "level_transition": [
+        {
+            "to_level": "EndGame",
+            "to_transition": 0,
+            "direction": "E"
+        }
+    ],
+    "particles":{
+        "likelihood":0.1,
+        "min_velocity":[-1, -10],
+        "max_velocity":[1, -50],
+        "colors":[
+            [255,255,255,255],[242, 231, 174, 255], [216, 193, 91, 255]
+        ],
+        "max":500
+    }
+}

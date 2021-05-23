@@ -171,7 +171,7 @@ class Player(Sprite.AnimatedSprite):
                     Settings.SOUND_EFFECTS["jump"].Play(fade_in_ms=200)
                     self.play_animation("idle")
                 elif self.transition["direction"] == "N":
-                    self.velocity = max(self.velocity.length(), self.gravity.y/2.5) * pygame.Vector2(0,-1)
+                    self.velocity = max(self.velocity.length(), self.gravity.y/5) * pygame.Vector2(0,-1)
                     Settings.SOUND_EFFECTS["falling"].Play(fade_in_ms=200)
                     self.play_animation("idle")
                 elif self.transition["direction"] == "W":
@@ -187,12 +187,12 @@ class Player(Sprite.AnimatedSprite):
             self.transition_frames -= 1
             if self.transition_frames == 0:
                 level_state_changes["transition"] = self.transition
-            if not self.transition == None:
-                # Apply forces
-                if not self.velocity == pygame.Vector2(0,0):
-                    self.velocity -= self.velocity * delta * self.air_resistance
-                if not (self.transition["direction"] == "E" or self.transition["direction"] == "W"):
-                    self.velocity += delta * self.gravity
+            # if not self.transition == None:
+            #     # Apply forces
+            #     if not self.velocity == pygame.Vector2(0,0):
+            #         self.velocity -= self.velocity * delta * self.air_resistance
+            #     if not (self.transition["direction"] == "E" or self.transition["direction"] == "W"):
+            #         self.velocity += delta * self.gravity
         else:
             if self.jump_grace_frames > 0:
                 self.jump_grace_frames-=1

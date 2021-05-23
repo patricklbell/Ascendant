@@ -30,8 +30,8 @@
     },
     "level_transition": [
         {
-            "to_level": "Tutorial1",
-            "to_transition": 2,
+            "to_level": "EndGame",
+            "to_transition": 0,
             "direction": "N"
         },
         {

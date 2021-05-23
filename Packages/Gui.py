@@ -17,7 +17,7 @@ class Gui():
         self.title_background.play_animation("loop", loop=-1)
 
         self.title_animation = Sprite.AnimatedSprite(position=pygame.Vector2(
-            Settings.RESOLUTION[0]/2-280/2, 75), spritesheet_json_filename=title_animation_filename, spritesheet_scale=(0.25, 0.25))
+            Settings.RESOLUTION[0]/2-270/2, 75), spritesheet_json_filename=title_animation_filename, spritesheet_scale=(0.25, 0.25))
         self.title_animation.play_animation("loop", loop=-1)
 
         self.health_bar = Sprite.AnimatedSprite(
@@ -71,6 +71,29 @@ class Gui():
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0] / 2+327/2-200, 240), (200, 50)),
                     text="QUIT",
+                    manager=Settings.gui_manager,
+                    starting_height=2,
+                ),
+            },
+            "end_game": {
+                "end_game_label": pygame_gui.elements.UILabel(
+                    text=f"You have ascended",
+                    object_id='#center_label',
+                    relative_rect=pygame.Rect(
+                        (Settings.RESOLUTION[0]/2-100, Settings.RESOLUTION[1]*0.5), (300, vertical_height)),
+                    manager=Settings.gui_manager
+                ),
+                "challenge_label": pygame_gui.elements.UILabel(
+                    text=f"Challenges: 0/3",
+                    object_id='#center_label',
+                    relative_rect=pygame.Rect(
+                        (Settings.RESOLUTION[0]/2-100, Settings.RESOLUTION[1]*0.5 + vertical_height), (300, vertical_height)),
+                    manager=Settings.gui_manager
+                ),
+                "quit": pygame_gui.elements.UIButton(
+                    relative_rect=pygame.Rect(
+                        (Settings.RESOLUTION[0]-400-vertical_gap, Settings.RESOLUTION[1] - vertical_gap - vertical_height), (400, 50)),
+                    text="RETURN TO MENU",
                     manager=Settings.gui_manager,
                     starting_height=2,
                 ),
@@ -415,7 +438,7 @@ class Gui():
         :param events: 
 
         """
-        running, restart, name = True, False, None
+        running, restart, name, leave_endgame = True, False, None, None
         for event in events:
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
@@ -425,6 +448,9 @@ class Gui():
                         self.set_state("settings")
                     elif event.ui_element == self.menus["paused"]["quit"]:
                         self.set_state("title")
+                    elif event.ui_element == self.menus["end_game"]["quit"]:
+                        self.set_state("title")
+                        leave_endgame = True
                     elif event.ui_element == self.menus["title"]["quit"]:
                         running = False
                     elif event.ui_element == self.menus["title"]["new_game"]:
@@ -583,7 +609,7 @@ class Gui():
                 #         element = self.menus["paused"][self.paused_focus[self.focused]]
                 #         pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"user_type":pygame_gui.UI_BUTTON_PRESSED, "ui_element":element}))
 
-        return (running, not len(self.state) == 0,  ("title" in self.state) or ("select_save" in self.state) or ("title_settings" in self.state) or ("name" in self.state), self.selected_save, restart, name)
+        return (running, not len(self.state) == 0,  ("title" in self.state) or ("select_save" in self.state) or ("title_settings" in self.state) or ("name" in self.state), self.selected_save, restart, name, leave_endgame)
 
     def render(self, surface, offset, delta):
         """
@@ -593,11 +619,11 @@ class Gui():
         :param delta: 
 
         """
-        if ("title" in self.state) or ("select_save" in self.state) or ("title_settings" in self.state) or ("name" in self.state):
+        if ("title" in self.state) or ("select_save" in self.state) or ("title_settings" in self.state) or ("name" in self.state) or ("end_game" in self.state):
             self.title_background.render(
                 surface, pygame.Vector2(0, 0), delta=delta)
-            if ("title" in self.state):
-                self.title_animation.render(surface, delta=delta)
+        if ("title" in self.state) or ("end_game" in self.state):
+            self.title_animation.render(surface, delta=delta)
 
     def set_state(self, *state):
         """
@@ -619,4 +645,4 @@ class Gui():
             self.title_background.hide()
 
         pygame.mouse.set_visible(bool(set(
-            ["paused", "settings",  "binding",  "title",  "select_save",  "title_settings", "name"]).intersection(state)))
+            ["paused", "settings",  "binding",  "title",  "select_save",  "title_settings", "name", "end_game"]).intersection(state)))

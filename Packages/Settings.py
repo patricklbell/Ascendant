@@ -48,6 +48,7 @@ def init():
         },
         "has_begun":False,
         "name":"",
+        "challenges":[],
     }
     
     # Load user settings and saves

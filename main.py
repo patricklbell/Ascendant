@@ -1,3 +1,4 @@
+from typing import Set
 import pygame_gui
 import pygame
 from Packages import Settings, Level, Player, Gui, Enemy, Water, Console
@@ -6,6 +7,7 @@ import warnings
 import pickle
 import copy
 import platform
+import json
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 warnings.simplefilter('ignore')
 
@@ -39,7 +41,7 @@ def init():
             attack0_length=34*0.875,
             attack1_length=35*0.875,
             attack2_length=10*0.875,
-            attack0_width=15*0.875,
+            attack0_width=-2*0.875,
             attack1_width=50*0.875,
             attack2_width=50*0.875,
             hearts=Settings.PLAYER_HEARTS,
@@ -102,14 +104,23 @@ def init():
             water_bubbliest_json_filename=Settings.SRC_DIRECTORY +
             "Entities/ToxicWater/water_bubbliest_spritesheet.json",
             spritesheet_scale=(0.6, 0.6),
-        )
+        ),
+        collectable_base=Enemy.ChallengeCollectable(
+            spritesheet_json_filename=Settings.SRC_DIRECTORY +
+            "Entities/Enemy2/enemy2_spritesheet.json",
+            spritesheet_scale=(0.875,0.875),
+            collider_offset=pygame.Vector2(22*0.875, 22*0.875),
+            collider_size=pygame.Vector2(20*0.875, 20*0.875),
+            max_float_distance=7,
+            float_period=0.7,
+        ),
     )
     debug_console = Console.Console(Settings.true_surface, level)
     return 1
 
 
 def gameloop():
-    is_running, is_paused, is_title = (True, False, True)
+    is_running, is_paused, is_title, is_end_game = (True, False, True, False)
     damage_freeze = 0
 
     if is_title:
@@ -154,7 +165,7 @@ def gameloop():
             debug_console.console.update(events)
 
         prev_title = is_title
-        is_running, is_paused, is_title, save, is_restart, name = Settings.gui.handle_events(
+        is_running, is_paused, is_title, save, is_restart, name, leave_endgame = Settings.gui.handle_events(
             events)
 
         is_dialog = False
@@ -179,6 +190,8 @@ def gameloop():
             level.save_game()
             Settings.MUSIC["ambient"].Stop(fade_out_ms=1000)
             Settings.MUSIC["title"].Play(loops=-1)
+        if leave_endgame is not None:
+            is_end_game = False
 
         # Check whether display has been moved
         new_window_rect = Settings.get_window_rect()
@@ -188,7 +201,7 @@ def gameloop():
 
         if not is_title:
             # Handle physics and animations if unpaused
-            if not is_paused and damage_freeze == 0:
+            if not is_paused and damage_freeze == 0 and not is_end_game:
                 physical_colliders = level.get_colliders()
                 attack_colliders = level.player.get_attack_colliders()
                 damage_colliders = []
@@ -206,6 +219,7 @@ def gameloop():
                         i += 1
                 if hit_occured:
                     damage_freeze = 3
+
 
                 state_changes = level.player.physics_process(1/60, physical_colliders, damage_colliders, level.get_hitable_colliders(
                 ), level.get_death_colliders(), level.get_save_colliders(), level.get_water_colliders(), level.transitions, hit_occured, not is_dialog)
@@ -235,6 +249,17 @@ def gameloop():
                 else:
                     level.player.input_static(events)
 
+                i = 0
+                while i < len(level.collectables):
+                    if level.collectables[i].state == "death":
+                        damage_freeze = 3
+                        level.player.is_white = True
+                    if level.collectables[i].physics_process(1/60, level.player.collider):
+                        level.challenges.append(level.level_name)
+                        del level.collectables[i]
+                    else:
+                        i += 1
+
                 Settings.camera.update_position(dt, pygame.Vector2(level.player.collider.left, level.player.collider.top) + pygame.Vector2(
                     level.player.collider.size[0], 0), Settings.surface)
                 _dt = dt
@@ -250,12 +275,16 @@ def gameloop():
             level.render_behind(_dt, Settings.surface,
                                 Settings.camera.position)
 
-            # Entities
-            level.player.render(
-                Settings.surface, Settings.camera.position, delta=_dt)
-            for enemy in level.enemies:
-                enemy.render(Settings.surface,
-                             Settings.camera.position, delta=_dt)
+            if not is_end_game:
+                # Entities
+                level.player.render(
+                    Settings.surface, Settings.camera.position, delta=_dt)
+                for enemy in level.enemies:
+                    enemy.render(Settings.surface,
+                                Settings.camera.position, delta=_dt)
+                for collectable in level.collectables:
+                    collectable.render(Settings.surface,
+                                Settings.camera.position, delta=_dt)
 
             # Render frontground before gui
             level.render_infront(dt, Settings.surface,
@@ -270,10 +299,14 @@ def gameloop():
                 for enemy in level.enemies:
                     enemy.render_colliders(
                         dt, Settings.surface, Settings.camera.position)
+                for collectable in level.collectables:
+                    collectable.render_colliders(
+                        dt, Settings.surface, Settings.camera.position)
 
-            # Ingame Gui rendering
-            Settings.gui.render_ingame(
-                dt, Settings.surface, level.player, Settings.camera.position)
+            if not is_end_game:
+                # Ingame Gui rendering
+                Settings.gui.render_ingame(
+                    dt, Settings.surface, level.player, Settings.camera.position)
 
             # Handle screen fade transition
             if transition_frames > 0:
@@ -283,13 +316,30 @@ def gameloop():
                 Settings.surface.fill((0, 0, 0, alpha))
                 if transition_frames == 0:
                     if not level.player.transition == None:
-                        level.load_level(
-                            level_name=level.player.transition["to_level"], transition=level.player.transition)
-                    untransition_frames = Settings.TRANSITION_MAX_FRAMES
+                        if level.player.transition["to_level"] == "EndGame":
+                            is_end_game = True
+                            level.load_level(
+                                level_name=level.player.transition["to_level"], transition=level.player.transition)
+                            Settings.gui.set_state("end_game")
+                            level.name = Settings.DEFAULT_SAVE["name"]
+                            level.has_begun = Settings.DEFAULT_SAVE["has_begun"]
+                            level.save_level = Settings.DEFAULT_SAVE["save_level"]
+                            level.save_dialog_completion = Settings.DEFAULT_SAVE["dialog_completion"]
+                            level.save_game()
+                            untransition_frames = 10*Settings.TRANSITION_MAX_FRAMES
+                        else:
+                            untransition_frames = Settings.TRANSITION_MAX_FRAMES
+                            level.load_level(
+                                level_name=level.player.transition["to_level"], transition=level.player.transition)
+                        
             if untransition_frames > 0:
                 untransition_frames -= 1
-                alpha = (untransition_frames /
-                         Settings.TRANSITION_MAX_FRAMES)*255
+                if is_end_game:
+                    alpha = (untransition_frames /
+                         (Settings.TRANSITION_MAX_FRAMES*10))*255
+                else:
+                    alpha = (untransition_frames /
+                            Settings.TRANSITION_MAX_FRAMES)*255
                 Settings.surface.fill(
                     (0, 0, 0, alpha), special_flags=pygame.BLEND_RGBA_SUB)
 

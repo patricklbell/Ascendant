@@ -1,4 +1,4 @@
-import pygame, json, itertools, copy, random
+import pygame, json, itertools, copy, random, math
 
 # For debugging
 from Packages import Settings, Sprite
@@ -373,6 +373,91 @@ class FlyingEnemy(Sprite.AnimatedSprite):
     def copy(self):
         """ """
         copyobj = FlyingEnemy()
+        for name, attr in self.__dict__.items():
+            if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):
+                copyobj.__dict__[name] = attr.copy()
+            else:
+                copyobj.__dict__[name] = copy.deepcopy(attr)
+
+        return copyobj
+
+class ChallengeCollectable(Sprite.AnimatedSprite):
+    """ """
+    def __init__(self, *args, **kwargs):
+        Sprite.AnimatedSprite.__init__(self, *args, **kwargs)
+
+        # Setup colliders
+        self.collider_offset = kwargs.get("collider_offset", pygame.Vector2(0,0))
+        self.collider_size = kwargs.get("collider_size", pygame.Vector2(0,0))
+
+        # Setup state
+        self.og_position = kwargs.get("position", pygame.Vector2(0,0))
+        self.float_period = kwargs.get("float_period", 2)
+        self.max_float_distance = kwargs.get("max_float_distance", 10)
+        self.float_time = 0
+
+        self.collider = pygame.Rect(
+            self.position.x+self.collider_offset.x, 
+            self.position.y+self.collider_offset.y, 
+            self.collider_size.x, 
+            self.collider_size.y
+        )
+        
+        self.state = "loop"
+
+        if "spritesheet_json_filename" in kwargs:
+            self.play_animation("loop", loop=True)
+
+    def render_colliders(self, delta, surface, offset):
+        """
+
+        :param delta: 
+        :param surface: 
+        :param offset: 
+
+        """
+        dirty_rects = []
+
+        collider = self.collider.move(offset)
+        pygame.draw.rect(surface, (0,255,120), collider)
+        dirty_rects.append(collider)
+
+        return dirty_rects
+    def update_state(self, state=None):
+        """
+
+        :param state:  (Default value = None)
+
+        """
+        if not state is None:
+            self.state = state
+    def physics_process(self, delta, player_collider=None):
+        """
+
+        :param delta: 
+        :param colliders:  (Default value = None)
+        :param player_position:  (Default value = None)
+        :param attack_colliders:  (Default value = None)
+
+        """
+        if not (self.state == "death" or self.state == "dead"):
+            self.float_time += delta
+            self.position = self.og_position + pygame.Vector2(0, self.max_float_distance) * math.sin(self.float_time / self.float_period)
+
+            self.collider.x = self.position.x + self.collider_offset.x
+            self.collider.y = self.position.y + self.collider_offset.y
+
+            # Check for damage events
+            if not player_collider == None:
+                if self.collider.colliderect(player_collider):
+                    self.play_animation("death", on_animation_end=lambda self: self.update_state(state="dead"), on_animation_interrupt=lambda self: self.update_state(state="dead"))
+                    self.state = "death"
+        return self.state == "dead"
+                    
+    # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
+    def copy(self):
+        """ """
+        copyobj = ChallengeCollectable()
         for name, attr in self.__dict__.items():
             if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):
                 copyobj.__dict__[name] = attr.copy()

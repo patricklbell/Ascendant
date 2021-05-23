@@ -1,38 +1,27 @@
 {
-    "filename":"Entities/Enemy1/enemy1_spritesheet.png",
+    "filename":"Entities/Enemy2/enemy2_spritesheet.png",
     "animations":[
         {
-            "name":"fly",
-            "x_init_offset":768,
-            "y_init_offset":0,
-            "x_size":64,
-            "y_size":64,
-            "x_offset":64,
-            "y_offset":0,
-            "time":0.4,
-            "frame_length":5
-        },
-        {
-            "name":"death",
+            "name":"loop",
             "x_init_offset":0,
             "y_init_offset":0,
             "x_size":64,
             "y_size":64,
             "x_offset":64,
             "y_offset":0,
-            "time":1,
-            "frame_length":11
+            "time":0.2,
+            "frame_length":5
         },
         {
-            "name":"revive",
-            "x_init_offset":640,
+            "name":"death",
+            "x_init_offset":1088,
             "y_init_offset":0,
             "x_size":64,
             "y_size":64,
             "x_offset":-64,
             "y_offset":0,
-            "time":1,
-            "frame_length":11
+            "time":0.15,
+            "frame_length":8
         }
     ]
 }
