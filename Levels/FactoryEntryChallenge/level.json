@@ -46,12 +46,12 @@
     },
     "dialog":[
         {
-            "text":["...Only the strongest can face this challenge..."],
-            "save_progress_name":"challenge_1"
-        },
-        {
             "text":["Even in the deepest dark, light finds a way", "What was unnatural also returns in time"],
             "save_progress_name":"lore_2"
+        },
+        {
+            "text":["...Only the strongest can face this challenge..."],
+            "save_progress_name":"challenge_1"
         }
     ]
 }

@@ -32,11 +32,11 @@
         {
             "to_level": "Tutorial1",
             "to_transition": 2,
-            "direction": "E"
+            "direction": "N"
         },
         {
-            "to_level": "Subterranean1",
-            "to_transition": 1,
+            "to_level": "Subterranean3",
+            "to_transition": 2,
             "direction": "W"
         }
     ],
