@@ -1,4 +1,5 @@
 import pygame
+import os
 import textboxify
 from Packages import Settings
 from string import Template
@@ -22,14 +23,14 @@ class Dialog():
         self.template = Template(text)
         self.dialog_box = textboxify.TextBoxFrame(
             border=textboxify.borders.LIGHT,
-            font_name="arial",
+            font_name=os.path.abspath(Settings.SRC_DIRECTORY+"UI/Fonts/pixel.ttf"),
             text=self.template.safe_substitute(name="example"),
             text_width=Settings.RESOLUTION[0]*0.5,
             lines=2,
             pos=(Settings.RESOLUTION[0]*(1/5), Settings.RESOLUTION[1]*(1/20)),
             padding=(Settings.RESOLUTION[0]/10, Settings.RESOLUTION[0]/15),
             font_color=(255, 255, 255),
-            font_size=20,
+            font_size=14,
             bg_color=(0, 0, 0),
         )
         self.dialog_box.set_indicator()
@@ -41,7 +42,7 @@ class Dialog():
             self.dialog_group.add(self.dialog_box)
         text = self.template.safe_substitute(name=player_name)
         if len(text) > 3 and text[0:3] == "...":
-            self.dialog_box.set_portrait()
+            self.dialog_box.set_portrait(Settings.SRC_DIRECTORY+"UI/Animations/game_portrait.png", (64, 64))
         self.dialog_box.set_text(text)
         self.has_activated = True
 
