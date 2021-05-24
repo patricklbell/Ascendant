@@ -50,12 +50,8 @@
             "save_progress_name":"factory_entry_challenge_0"
         },
         {
-            "text":["Even in the deepest dark, light finds a way", "What was unnatural also returns in time"],
-            "save_progress_name":"factory_entry_challenge_1"
-        },
-        {
             "text":["...Only the strongest can face this challenge..."],
-            "save_progress_name":"factory_entry_challenge_2"
+            "save_progress_name":"factory_entry_challenge_1"
         }
     ]
 }

@@ -47,7 +47,7 @@
     "dialog":[
         {
             "text":["Whatever manner of creature created this place is long gone", "And their secrets with them"],
-            "save_progress_name":"lore_3"
+            "save_progress_name":"factory_1_challenge_0"
         }
     ]
 }

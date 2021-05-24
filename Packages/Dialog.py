@@ -7,7 +7,7 @@ from string import Template
 class Dialog():
     """ """
 
-    def __init__(self, pages, collider, save_progress_name, player_name):
+    def __init__(self, pages, collider, save_progress_name):
         self.collider = collider
         self.spn = save_progress_name
 
@@ -24,23 +24,25 @@ class Dialog():
             border=textboxify.borders.LIGHT,
             font_name="arial",
             text=self.template.safe_substitute(name="example"),
-            text_width=Settings.RESOLUTION[0] *
-            (3/4) - 2*Settings.RESOLUTION[0]/9,
+            text_width=Settings.RESOLUTION[0]*0.5,
             lines=2,
-            pos=(1/2*(Settings.RESOLUTION[0] - (Settings.RESOLUTION[0]*(
-                3/4) - 2*Settings.RESOLUTION[0]/11)), Settings.RESOLUTION[1]*(3/20)),
-            padding=(Settings.RESOLUTION[0]/11, Settings.RESOLUTION[0]/11),
+            pos=(Settings.RESOLUTION[0]*(1/5), Settings.RESOLUTION[1]*(1/20)),
+            padding=(Settings.RESOLUTION[0]/10, Settings.RESOLUTION[0]/15),
             font_color=(255, 255, 255),
             font_size=20,
             bg_color=(0, 0, 0),
         )
         self.dialog_box.set_indicator()
+        self.dialog_box.set_portrait(Settings.SRC_DIRECTORY+"UI/Animations/player_portrait.png", (64, 64))
 
     def activate(self, player_name):
         """ """
         if not self.dialog_group:
             self.dialog_group.add(self.dialog_box)
-        self.dialog_box.set_text(self.template.safe_substitute(name=player_name))
+        text = self.template.safe_substitute(name=player_name)
+        if len(text) > 3 and text[0:3] == "...":
+            self.dialog_box.set_portrait()
+        self.dialog_box.set_text(text)
         self.has_activated = True
 
     def update(self, level, player_collider, player_name):

@@ -221,13 +221,14 @@ class Level():
         save_data["dialog_completion"] = self.save_dialog_completion
         save_data["challenges"] = self.challenges
 
-        percent_completion = math.floor((len(self.save_dialog_completion) / 24)*1000)/10
+        percent_completion = math.floor((len(self.save_dialog_completion) / 11)*1000)/10
         save_data["title_info"]["percentage_completion"] = percent_completion
 
         # Update percentage completion in gui
-        Settings.gui.menus["select_save"][f"save{Settings.SELECTED_SAVE}_label"].set_text(f"SAVE 1 ({percent_completion}%): {self.name}")
-        Settings.gui.names[Settings.gui.selected_save-1] = self.name
-        Settings.gui.completions[Settings.SELECTED_SAVE-1] = percent_completion
+        if save_data["has_begun"]:
+            Settings.gui.menus["select_save"][f"save{Settings.SELECTED_SAVE}_label"].set_text(f"SAVE 1 ({percent_completion}%): {self.name[:6] + (self.name[6:] and '..')}")
+        else:
+            Settings.gui.menus["select_save"][f"save{Settings.SELECTED_SAVE}_label"].set_text("NEW GAME")
         Settings.gui.has_begun[Settings.SELECTED_SAVE-1] = save_data["has_begun"]
 
         try:
@@ -362,8 +363,7 @@ class Level():
                     self.dialog_boxes.append(Dialog.Dialog(
                         info["text"],
                         pygame.Rect(bounds["x"], bounds["y"], bounds["width"], bounds["height"]),
-                        info["save_progress_name"],
-                        self.name
+                        info["save_progress_name"]
                     ))
         elif Settings.DEBUG:
             print(f"No dialog entity layer found in {self.entities_filename} and/or {self.level_filename}")

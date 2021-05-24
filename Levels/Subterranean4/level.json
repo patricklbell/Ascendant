@@ -52,15 +52,15 @@
     "dialog":[
         {
             "text":["...I will ascend..."],
-            "save_progress_name":"subterranean4_2"
+            "save_progress_name":"subterranean4_0"
         },
         {
-            "text":["Light shines the way"],
+            "text":["Light shines above"],
             "save_progress_name":"subterranean4_1"
         },
         {
             "text":["I sense this is the end"],
-            "save_progress_name":"subterranean4_0"
+            "save_progress_name":"subterranean4_2"
         }
     ]
 }

@@ -56,8 +56,8 @@
     },
     "dialog":[
         {
-            "text":["They choose to live in the dark", "Nature has freed me"],
-            "save_progress_name":"lore_1"
+            "text":["They live in a dark mechanical world", "Nature has freed me from their curse"],
+            "save_progress_name":"factory_entry_0"
         }
     ]
 }

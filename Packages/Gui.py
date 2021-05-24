@@ -27,29 +27,28 @@ class Gui():
             health_sprite_filename, scale=(2, 2))
         self.health_outline.z = 2
         self.save_sprite = Sprite.ImageSprite(
-            save_sprite_filename, scale=(1,1))
+            save_sprite_filename, scale=(1, 1))
         self.save_animation = Sprite.AnimatedSprite(
             spritesheet_json_filename=save_animation_filename, position=pygame.Vector2(0, Settings.RESOLUTION[1]/2-32), spritesheet_scale=(0.5, 0.5))
 
         vertical_gap, vertical_height = 40, 30
-        self.completions = []
-        self.has_begun = []
-        self.names = ["", "", ""]
+
+        save_labels = ["", "", ""]
+        self.has_begun = [False, False, False]
         for i in range(3):
             save_filename = Settings.SAVE_FILETEMPLATE.substitute(num=str(i+1))
             try:
                 with open(save_filename) as json_file:
                     json_data = json.load(json_file)
-                self.completions.append(
-                    json_data["title_info"]["percentage_completion"])
-                self.has_begun.append(json_data["has_begun"])
-                self.names[i] = json_data["name"]
+                self.has_begun[i] = json_data["has_begun"]
+                if json_data["has_begun"]:
+                    save_labels[i] = f"SAVE {i+1} ({json_data['title_info']['percentage_completion']}%): {json_data['name'][:6] + (json_data['name'][6:] and '..')}"
+                else:
+                    save_labels[i] = "NEW GAME"
             except FileNotFoundError as e:
                 if Settings.DEBUG:
                     print(f"Failed to load save {save_filename}, error: ", e)
-                self.completions.append(0)
-                self.has_begun.append(False)
-
+                save_labels[i] = "NEW GAME"
 
         self.menus = {
             "title": {
@@ -100,10 +99,10 @@ class Gui():
             },
             "select_save": {
                 "save1_label": pygame_gui.elements.UILabel(
-                    text=f"SAVE 1 ({self.completions[0]}%): {self.names[0]}",
+                    text=save_labels[0],
                     object_id='#small_label',
                     relative_rect=pygame.Rect(
-                        (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3), (200, vertical_height)),
+                        (Settings.RESOLUTION[0]/2-220, Settings.RESOLUTION[1]/3), (220, vertical_height)),
                     manager=Settings.gui_manager
                 ),
                 "save1": pygame_gui.elements.UIButton(
@@ -115,9 +114,9 @@ class Gui():
                     starting_height=2,
                 ),
                 "save2_label": pygame_gui.elements.UILabel(
-                    text=f"SAVE 1 ({self.completions[1]}%): {self.names[1]}",
+                    text=save_labels[1],
                     relative_rect=pygame.Rect(
-                        (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3+vertical_gap), (200, vertical_height)),
+                        (Settings.RESOLUTION[0]/2-220, Settings.RESOLUTION[1]/3+vertical_gap), (220, vertical_height)),
                     object_id='#small_label',
                     manager=Settings.gui_manager
                 ),
@@ -130,9 +129,9 @@ class Gui():
                     starting_height=2,
                 ),
                 "save3_label": pygame_gui.elements.UILabel(
-                    text=f"SAVE 1 ({self.completions[2]}%): {self.names[2]}",
+                    text=save_labels[2],
                     relative_rect=pygame.Rect(
-                        (Settings.RESOLUTION[0]/2-200, Settings.RESOLUTION[1]/3+vertical_gap*2), (200, vertical_height)),
+                        (Settings.RESOLUTION[0]/2-220, Settings.RESOLUTION[1]/3+vertical_gap*2), (220, vertical_height)),
                     object_id='#small_label',
                     manager=Settings.gui_manager,
                 ),
@@ -330,8 +329,9 @@ class Gui():
                     # options_list=["1280x360","850x360","820x460", "640x400", "700x525"],
                     # options_list=["1100x300", "800x340","770x430", "600x380", "660x500"],*0.8
                     # options_list=["880x240", "640x270","620x340", "480x300", "530x400"],
-                    options_list=["11:3", "21:9","16:9", "16:10", "4:3"],
-                    starting_option=["11:3", "21:9","16:9", "16:10", "4:3"][["1100x300", "800x340","770x430", "600x380", "660x500"].index(Settings.RESOLUTION_STR)],
+                    options_list=["11:3", "21:9", "16:9", "16:10", "4:3"],
+                    starting_option=["11:3", "21:9", "16:9", "16:10", "4:3"][[
+                        "1100x300", "800x340", "770x430", "600x380", "660x500"].index(Settings.RESOLUTION_STR)],
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2, Settings.RESOLUTION[1]/6+vertical_gap), (140, vertical_height)),
                     manager=Settings.gui_manager,
@@ -461,7 +461,8 @@ class Gui():
                     elif event.ui_element == self.menus["title_settings"]["save"]:
                         self.set_state("title")
 
-                        new_resolution = ["1100x300", "800x340","770x430", "600x380", "660x500"][["11:3", "21:9","16:9", "16:10", "4:3"].index(self.menus["title_settings"]["resolution"].selected_option)]
+                        new_resolution = ["1100x300", "800x340", "770x430", "600x380", "660x500"][[
+                            "11:3", "21:9", "16:9", "16:10", "4:3"].index(self.menus["title_settings"]["resolution"].selected_option)]
 
                         # Update settings
                         Settings.USER_SETTINGS["music_volume"] = self.menus["title_settings"]["music_volume"].get_current_value(

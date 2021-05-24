@@ -95,12 +95,12 @@ class Enemy(Sprite.AnimatedSprite):
                     if player_distance < self.attack_distance and ((player_position.y >= self.position.y) and (player_position.y <= self.position.y+self.collider_size.y)):
                         def handle_stab_end(self):
                             """ """
-                            self.state = "wait"
+                            if self.state == "attack":
+                                self.state = "wait"
                             self.attack_gap_time = 0
                         self.play_animation("stab", on_animation_end=handle_stab_end)
                         self.state = "attack"
                     else: self.state = "alert"
-
             elif self.state == "alert":
                 self.state = "patrol"
                 self.play_animation("unlevel_spear", on_animation_end=lambda self: self.play_animation("walk", loop=True))
