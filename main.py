@@ -1,17 +1,18 @@
 # Import standard libraries
-from Packages import Settings, Level, Player, Gui, Enemy, Water, Console
 import platform
 import copy
 import pickle
+import os
+# Suppress help message
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import warnings
-import pygame
+warnings.simplefilter('ignore')
 from typing import Set
 import pygame_gui
-import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-warnings.simplefilter('ignore')
+import pygame
 
 # Import packages
+from Packages import Settings, Level, Player, Gui, Enemy, Water, Console
 
 # Used for window management and movement
 if platform.system() == "Windows":
@@ -51,8 +52,6 @@ level = Level.Level(
         attack2_width=50*0.875,
         hearts=Settings.PLAYER_HEARTS,
         iframes=90,
-        calculate_flip=True,
-        calculate_white=True,
         water_splash_json_filename=Settings.SRC_DIRECTORY +
         "Entities/Water/splash_spritesheet.json",
         water_big_splash_json_filename=Settings.SRC_DIRECTORY +
@@ -337,8 +336,7 @@ def gameloop():
             if Settings.DEBUG:
                 level.render_colliders(
                     dt, Settings.surface, Settings.camera.position)
-                level.player.render_colliders(
-                    dt, Settings.surface, Settings.camera.position)
+                level.player.render_colliders(Settings.surface, Settings.camera.position)
                 for enemy in level.enemies:
                     enemy.render_colliders(
                         dt, Settings.surface, Settings.camera.position)
@@ -402,7 +400,7 @@ def gameloop():
                 Settings.surface.fill(
                     (0, 0, 0, alpha), special_flags=pygame.BLEND_RGBA_SUB)
 
-            # Scale game rendering
+            # Scale game rendering to camera
             Settings.true_surface.blit(pygame.transform.scale(Settings.surface, (int(Settings.true_surface.get_rect().size[0]*Settings.camera.scale[0]), int(Settings.true_surface.get_rect().size[1]*Settings.camera.scale[1]))),
                                        (0, 0)
                                        )
@@ -414,22 +412,26 @@ def gameloop():
                 for dialogue_box in level.dialog_boxes:
                     dialogue_box.render(Settings.surface)
 
+        # Render pygame_gui ui
         Settings.gui.render(Settings.surface, Settings.camera.position, dt)
         Settings.gui_manager.draw_ui(Settings.surface)
 
-        # Scale gui rendering
+        # Scale gui rendering to resized resolution
         Settings.true_surface.blit(pygame.transform.scale(
             Settings.surface, Settings.true_surface.get_rect().size), (0, 0))
         debug_console.console.show(Settings.true_surface)
-
+        
+        # Refresh entire screen
         pygame.display.update()
+    # Exit game if is_running is false
     return 0
 
-
+# Keep refreshing display until game is quit
 while gameloop() == 1:
     if Settings.DEBUG:
         print("Reset display and recalculated gui")
 
+    # Calculate new resolution and display info
     Settings.RESOLUTION_STR = Settings.USER_SETTINGS["resolution"]
     Settings.RESOLUTION = (int(Settings.RESOLUTION_STR.split(
         'x')[0]), int(Settings.RESOLUTION_STR.split('x')[1]))
@@ -437,6 +439,9 @@ while gameloop() == 1:
     info = pygame.display.Info()
     screen_width, screen_height = info.current_w, info.current_h
     if platform.system() == "Windows":
+        # After the display has already been intialized display.info doesn't
+        # return the correct correct screen size on windows. Use windll to get 
+        # the correct resolution
         # https://gamedev.stackexchange.com/questions/105750/pygame-fullsreen-display-issue
         ctypes.windll.user32.SetProcessDPIAware()
         true_res = (ctypes.windll.user32.GetSystemMetrics(0),
@@ -450,10 +455,12 @@ while gameloop() == 1:
         Settings.true_surface = pygame.display.set_mode(
             Settings.RESOLUTION, flags=pygame.RESIZABLE)
 
+    # Inactive buffer display to be scaled to active displat
     Settings.surface = pygame.Surface(
         Settings.RESOLUTION, flags=pygame.SRCALPHA)
     Settings.window_rect = Settings.get_window_rect()
 
+    # Just reintiliaze gui rather than deleting old gui because little performance effect
     Settings.gui_manager = pygame_gui.UIManager(
         Settings.RESOLUTION, Settings.SRC_DIRECTORY + "UI/pygamegui_theme.json")
     Settings.gui_manager.add_font_paths(
@@ -471,22 +478,25 @@ while gameloop() == 1:
         "UI/Animations/save_spritesheet.json",
     )
 
+    # Explicitly sclae gui to new resolution
     Settings.gui_manager.mouse_pos_scale_factor = (
         Settings.RESOLUTION[0] / Settings.true_surface.get_width(), Settings.RESOLUTION[1] / Settings.true_surface.get_height())
 
+# After exiting game update audio cache
+if Settings.CACHE:
+    try:
+        os.makedirs(Settings.SRC_DIRECTORY+".cache")
+    except FileExistsError:
+        pass
 
-try:
-    os.makedirs(Settings.SRC_DIRECTORY+".cache")
-except FileExistsError:
-    pass
+    # Update sound cache
+    pickle.dump(Settings.MUSIC, open(
+        Settings.SRC_DIRECTORY+".cache/music.p", mode="wb+"))
+    pickle.dump(Settings.SOUND_EFFECTS, open(
+        Settings.SRC_DIRECTORY+".cache/sound_effects.p", mode="wb+"))
+    if Settings.DEBUG:
+        print("wrote sound cache")
 
-# Update sound cache
-pickle.dump(Settings.MUSIC, open(
-    Settings.SRC_DIRECTORY+".cache/music.p", mode="wb+"))
-pickle.dump(Settings.SOUND_EFFECTS, open(
-    Settings.SRC_DIRECTORY+".cache/sound_effects.p", mode="wb+"))
-if Settings.DEBUG:
-    print("wrote sound cache")
-
+# Cleanup pygame
 pygame.display.quit()
 pygame.quit()

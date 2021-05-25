@@ -1,9 +1,19 @@
+# Access constants
 from Packages import Settings
+
+# Use pygame library for an easy console
 from Packages.Extern.pygame_console import game_console
 
 class Console:
+    """Class for managing console so it has access to level object.
+    
+    Args:
+        screen (pygame.surface): Surface to render to (required).
+        level (Level.Level): Shared level object (required).
+    """
     def __init__(self, screen, level):
         self.level = level
+        # Intialize console with its game scope being this class
         self.console = game_console.Console(self, screen.get_width(), {
             'global' : {
                 'layout' : 'INPUT_BOTTOM',

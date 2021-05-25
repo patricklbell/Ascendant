@@ -1,82 +1,137 @@
-import pygame, json, itertools, pygame_gui, copy, random
+# Import standard libraries
+import pygame
+import copy
+import random
 
-from Packages.Extern import SoundPlayer
+# Import custom packages, access objects in Settings global space
 from Packages import Settings, Sprite
 
+
 class Player(Sprite.AnimatedSprite):
-    """ """
+    """ Player class handling physics, rendering, state. Inherits from Sprite.AnimatedSprite
+
+    Args:
+        position (pygame.Vector2): level space position of sprite.
+        spritesheet_json_filename (Str): string path of json for animation.
+        spritesheet_scale (tuple): x, y to scale spritesheet resolution by.
+        gravity (pygame.Vector2): x, y components of constant acceleration.
+        air resistance (float): Factor to adjust friction force when player is in the air.
+        floor resistance (float): Factor to adjust friction force when player is on the floor.
+        water resistance (float): Factor to adjust friction force when player is in water.
+        walk_speed (float): Constant walk speed independant of friction.
+        water_walk_speed (float): Constant walk speed independant of friction when in water.
+        jump_speed (float): Velocity added to y velocity at jump instant.
+        jump_add_speed (float): Velocity added to y velocity while jump is held.
+        jump_grace_frames (int): Number of frames after leaving ground where jump is still allowed.
+        knockback_speed (pygame.Vector2): x, y components of speed added for player attacks against enemies. split on attack type.
+        bounce_speed (pygame.Vector2): x, y components of speed added for player attacks against hitable_colliders. split on attack type.
+        damage_knockback_speed (float): speed added to velocity during damage event, directed away from enemy.
+        collider_offset (pygame.Vector2): x, y components of offset between collider and sprite.
+        collider_size (pygame.Vector2): x, y components of size of collider.
+        attack0_length (float): x component of side slash, added to player collider to get damage collider.
+        attack0_width (float): y component of side slash, added to player collider to get damage collider.
+        attack1_length (float): y component of down slash, added to player collider to get damage collider.
+        attack1_width (float): x component of down slash, added to player collider to get damage collider.
+        attack2_length (float): y component of up slash, added to player collider to get damage collider.
+        attack2_width (float): x component of up slash, added to player collider to get damage collider.
+        hearts (int): Number of health points player starts with, lost with damage or death_collider.
+        iframes (int): Number of frames of invincibility after being damaged.
+        transition_frames (int): Number of frames transition lasts.
+        water_splash_json_filename (str): string path of json for splash animation.
+        water_big_splash_json_filename (str): string path of json for bigger splash animation.
+        short_stop_json_filename (str): string path of json for small dust cloud animation.
+        hard_stop_json_filename (str): string path of json for large dust cloud animation.
+    """
+
     def __init__(self, *args, **kwargs):
+        # Inherit from AnimatedSprite for player animations
+        kwargs["calculate_flip"] = True
+        kwargs["calculate_white"] = True
         Sprite.AnimatedSprite.__init__(self, *args, **kwargs)
 
-        # Setup physics
-        self.gravity = kwargs.get("gravity", pygame.Vector2(0,500))
+        # Setup physics and constants
+        self.gravity = kwargs.get("gravity", pygame.Vector2(0, 500))
         self.air_resistance = kwargs.get("air_resistance", 1)
         self.floor_resistance = kwargs.get("floor_resistance", 10)
         self.water_resistance = kwargs.get("water_resistance", 9)
         self.walk_speed = kwargs.get("walk_speed", 200)
         self.water_walk_speed = kwargs.get("water_walk_speed", 100)
-        self.jump_speed = kwargs.get("jump_speed", -200)
-        self.jump_add_speed = kwargs.get("jump_add_speed", -500)
-        self.jump_add_max_time = kwargs.get("jump_add_max_time", 1)
-        self.jump_add_time = 0
-        self.jumping = False
-        self.jump_grace_max_frames = kwargs.get("jump_grace_frames", 5)
-        self.jump_grace_frames = 0
         self.knockback_speed = kwargs.get("knockback_speed", pygame.Vector2(200, 500))
         self.bounce_speed = kwargs.get("bounce_speed", pygame.Vector2(600, 500))
         self.damage_knockback_speed = kwargs.get("damage_knockback_speed", 10)
+        self.jump_speed = kwargs.get("jump_speed", -200)
+        self.jump_add_speed = kwargs.get("jump_add_speed", -500)
+        self.jump_add_max_time = kwargs.get("jump_add_max_time", 1)
+        self.jump_grace_max_frames = kwargs.get("jump_grace_frames", 5)
+        self.jump_add_time = 0
+        self.jumping = False
+        self.jump_grace_frames = 0
+        self.velocity = pygame.Vector2(0, 0)
+        self.constant_velocity = pygame.Vector2(0, 0)
 
-        # Setup colliders
-        self.collider_offset = kwargs.get("collider_offset", pygame.Vector2(0,0))
-        self.collider_size = kwargs.get("collider_size", pygame.Vector2(0,0))
-        
-        # Setup damage colliders
+        # Setup player and attack collision info 
+        self.collider_offset = kwargs.get("collider_offset", pygame.Vector2(0, 0))
+        self.collider_size = kwargs.get("collider_size", pygame.Vector2(0, 0))
         self.attack0_length = kwargs.get("attack0_length", 100)
         self.attack0_width = kwargs.get("attack0_width", 50)
         self.attack1_length = kwargs.get("attack1_length", 100)
         self.attack1_width = kwargs.get("attack1_width", 50)
         self.attack2_length = kwargs.get("attack2_length", 100)
         self.attack2_width = kwargs.get("attack2_width", 50)
+        
+        # Create colliders true from parameters
+        self.collider = pygame.Rect(
+            self.position.x+self.collider_offset.x,
+            self.position.y+self.collider_offset.y,
+            self.collider_size.x,
+            self.collider_size.y
+        )
+        # Collider to check if player is on the ground
+        # reduce size to correct for error, avoiding wall climb
+        self.floor_collider = pygame.Rect(
+            self.position.x+self.collider_offset.x+int(self.collider_size.x/1.6) / 4,
+            self.position.y+self.collider_offset.y+(self.collider_size.y-1),
+            self.collider_size.x/1.6,
+            1
+        )
 
-        # Other
+        # Other properties
         self.hearts = kwargs.get("hearts", 3)
         self.iframe_length = kwargs.get("iframes", 120)
         self.transition_max_frames = kwargs.get("transition_frames", 100)
         self.transition_frames = 0
         self.transition = None
-        self.water_splash_json_filename = kwargs.get("water_splash_json_filename", None)
-        if not self.water_splash_json_filename == None:
-            self.water_splash = Sprite.AnimatedSprite(spritesheet_json_filename=self.water_splash_json_filename, spritesheet_scale=(0.5,0.5))
-        self.water_big_splash_json_filename = kwargs.get("water_big_splash_json_filename", None)
-        if not self.water_big_splash_json_filename == None:
-            self.water_big_splash = Sprite.AnimatedSprite(spritesheet_json_filename=self.water_big_splash_json_filename, spritesheet_scale=(0.5,0.5))
-        
-        self.short_stop_json_filename = kwargs.get("short_stop_json_filename", None)
-        if not self.short_stop_json_filename == None:
-            self.short_stop = Sprite.AnimatedSprite(spritesheet_json_filename=self.short_stop_json_filename, calculate_flip=True, spritesheet_scale=(0.5,0.5))
-        self.hard_stop_json_filename = kwargs.get("hard_stop_json_filename", None)
-        if not self.hard_stop_json_filename == None:
-            self.hard_stop = Sprite.AnimatedSprite(spritesheet_json_filename=self.hard_stop_json_filename, calculate_flip=True, spritesheet_scale=(0.5,0.5))
-            self.hard_stop1 = Sprite.AnimatedSprite(spritesheet_json_filename=self.hard_stop_json_filename, calculate_flip=True, spritesheet_scale=(0.5,0.5))
-            self.hard_stop1.flipX = True
-        
 
-        self.velocity = pygame.Vector2(0, 0)
-        self.constant_velocity = pygame.Vector2(0, 0)
-        self.collider = pygame.Rect(
-            self.position.x+self.collider_offset.x, 
-            self.position.y+self.collider_offset.y, 
-            self.collider_size.x, 
-            self.collider_size.y
-        )
-        self.floor_collider = pygame.Rect(
-            self.position.x+self.collider_offset.x+self.collider_size.x/4, 
-            self.position.y+self.collider_offset.y+(self.collider_size.y-1), 
-            self.collider_size.x/2, 
-            1
-        )
+        # Load auxiliary animation
+        self.water_splash_json_filename = kwargs.get(
+            "water_splash_json_filename", None)
+        if not self.water_splash_json_filename == None:
+            self.water_splash = Sprite.AnimatedSprite(
+                spritesheet_json_filename=self.water_splash_json_filename, spritesheet_scale=(0.5, 0.5))
+        self.water_big_splash_json_filename = kwargs.get(
+            "water_big_splash_json_filename", None)
+        if not self.water_big_splash_json_filename == None:
+            self.water_big_splash = Sprite.AnimatedSprite(
+                spritesheet_json_filename=self.water_big_splash_json_filename, spritesheet_scale=(0.5, 0.5))
+        self.short_stop_json_filename = kwargs.get(
+            "short_stop_json_filename", None)
+        if not self.short_stop_json_filename == None:
+            self.short_stop = Sprite.AnimatedSprite(
+                spritesheet_json_filename=self.short_stop_json_filename, calculate_flip=True, spritesheet_scale=(0.5, 0.5))
+        self.hard_stop_json_filename = kwargs.get(
+            "hard_stop_json_filename", None)
+        if not self.hard_stop_json_filename == None:
+            # Create two animations to allow double dust cloud
+            self.hard_stop = Sprite.AnimatedSprite(
+                spritesheet_json_filename=self.hard_stop_json_filename, calculate_flip=True, spritesheet_scale=(0.5, 0.5))
+            self.hard_stop1 = Sprite.AnimatedSprite(
+                spritesheet_json_filename=self.hard_stop_json_filename, calculate_flip=True, spritesheet_scale=(0.5, 0.5))
+            self.hard_stop1.flipX = True
+
+        # Setup state
         self.is_on_ground = False
-        self.key_state = {"up":False, "down":False, "right":False, "left":False, "jump":False, "attack":False}
+        self.key_state = {"up": False, "down": False, "right": False,
+                          "left": False, "jump": False, "attack": False}
         self.state = "idle"
         self.iframes = 0
         self.is_in_water = False
@@ -88,150 +143,185 @@ class Player(Sprite.AnimatedSprite):
             self.play_animation("idle", loop=True)
 
     def get_attack_colliders(self):
-        """ """
+        """ Returns all attack colliders at current animation frame. """
         if self.can_attack and self.animation_playing:
+            # Adjust player colliders size and position to attack state
             if self.animation_name == "attack0" and self.frame_num >= 2:
-                inflated = self.collider.inflate(self.attack0_length, self.attack0_width)
-                return [inflated.move( (((not self.flipX)*2) - 1)*(self.attack0_length/2 + self.collider_size.x/2), 0)]
+                inflated = self.collider.inflate(
+                    self.attack0_length, self.attack0_width)
+                return [inflated.move((((not self.flipX)*2) - 1)*(self.attack0_length/2 + self.collider_size.x/2), 0)]
 
             if self.animation_name == "attack1" and self.frame_num >= 3 and self.frame_num <= 5:
-                inflated = self.collider.inflate(self.attack1_width, self.attack1_length)
-                return [inflated.move(0, -self.attack1_length/2 -self.collider_size.y/2)]
+                inflated = self.collider.inflate(
+                    self.attack1_width, self.attack1_length)
+                return [inflated.move(0, -self.attack1_length/2 - self.collider_size.y/2)]
 
             if self.animation_name == "attack2" and self.frame_num < 5:
-                inflated = self.collider.inflate(self.attack2_width, self.attack1_length)
-                return [inflated.move(0, self.attack1_length/2 +self.collider_size.y/2)]
+                inflated = self.collider.inflate(
+                    self.attack2_width, self.attack1_length)
+                return [inflated.move(0, self.attack1_length/2 + self.collider_size.y/2)]
 
-    def render_colliders(self, delta, surface, offset):
-        """
+    def render_colliders(self, surface, offset):
+        """ Draw current attack, player and floor colliders to level space.
+        Returns list of dirty rects.
 
-        :param delta: 
-        :param surface: 
-        :param offset: 
-
+        Args:
+            surface (pygame.surface): Surface to render to
+            offset (pygame.Vector2): Camera offset
         """
         dirty_rects = []
 
         collider = self.collider.move(offset)
-        pygame.draw.rect(surface, (0,255,0), collider)
+        pygame.draw.rect(surface, (0, 255, 0), collider)
         dirty_rects.append(collider)
 
         floor_collider = self.floor_collider.move(offset)
-        pygame.draw.rect(surface, (255,255,0), floor_collider)
+        pygame.draw.rect(surface, (255, 255, 0), floor_collider)
         dirty_rects.append(floor_collider)
 
         if self.can_attack:
-            if self.animation_name == "attack0" and self.frame_num >= 5:
-                attack_collider = collider.inflate(self.attack0_length, self.attack0_width)
-                attack_collider.move_ip( (((not self.flipX)*2) - 1)*(self.attack0_length/2 + self.collider_size.x/2), 0)
-                pygame.draw.rect(surface, (0,0,255), attack_collider)
+            if self.animation_name == "attack0" and self.frame_num >= 2:
+                attack_collider = collider.inflate(
+                    self.attack0_length, self.attack0_width)
+                attack_collider.move_ip(
+                    (((not self.flipX)*2) - 1)*(self.attack0_length/2 + self.collider_size.x/2), 0)
+                pygame.draw.rect(surface, (0, 0, 255), attack_collider)
                 dirty_rects.append(attack_collider)
 
-            if self.animation_name == "attack1" and self.frame_num == 4:
-                attack_collider = collider.inflate(self.attack1_width, self.attack1_length)
-                attack_collider.move_ip(0, -self.attack1_length/2 -self.collider_size.y/2)
-                pygame.draw.rect(surface, (0,0,255), attack_collider)
+            if self.animation_name == "attack1" and self.frame_num >= 3 and self.frame_num <= 5:
+                attack_collider = collider.inflate(
+                    self.attack1_width, self.attack1_length)
+                attack_collider.move_ip(
+                    0, -self.attack1_length/2 - self.collider_size.y/2)
+                pygame.draw.rect(surface, (0, 0, 255), attack_collider)
                 dirty_rects.append(attack_collider)
 
-            if self.animation_name == "attack2":
-                attack_collider = collider.inflate(self.attack2_width, self.attack2_length)
-                attack_collider.move_ip(0, self.attack1_length/2 +self.collider_size.y/2)
-                pygame.draw.rect(surface, (0,0,255), attack_collider)
+            if self.animation_name == "attack2" and self.frame_num < 5:
+                attack_collider = collider.inflate(
+                    self.attack2_width, self.attack2_length)
+                attack_collider.move_ip(
+                    0, self.attack1_length/2 + self.collider_size.y/2)
+                pygame.draw.rect(surface, (0, 0, 255), attack_collider)
                 dirty_rects.append(attack_collider)
         return dirty_rects
 
-    def physics_process(self, delta, colliders = None, damage_colliders=None, hitable_colliders=None, death_colliders=None, save_colliders=None, water_colliders=None, transitions=None, hit_occured=False, allow_movement=True):
+    def physics_process(self, delta, colliders=None, damage_colliders=None, hitable_colliders=None, death_colliders=None, save_colliders=None, water_colliders=None, transitions=None, hit_occured=False, allow_movement=True):
+        """ Calculates physics, state changes and transitions for player.
+        Returns dictionary of state changes: {"reset": (bool), "transition": (dict or None), "respawn": (bool), "hit": (bool)}
+
+        Args:
+            delta (float): Constant physics tick, most likely matching 1 / fps.
+            colliders ([pygame.rect]): List of level's physical colliders.
+            damage_colliders ([pygame.rect]): List of level's damage colliders.
+            hitable_colliders ([pygame.rect]): List of level's hitable colliders, bouncable objects.
+            death_colliders ([pygame.rect]): List of level's death colliders, cause reset when collided.
+            save_colliders ([pygame.rect]): List of level's save colliders, allow saving when colliding.
+            water_colliders ([pygame.rect]): List of level's water colliders.
+            transitions (dict): List of level's transition colliders, change levels when collided.
+            hit_occured (bool): Flag for when any enemy attack was successful
+            allow_movement (bool): Flag to allow player controled movement
         """
+        # Setup returned state changes
+        level_state_changes = {
+            "reset": False, "transition": None, "respawn": False, "hit": False}
 
-        :param delta: 
-        :param colliders:  (Default value = None)
-        :param damage_colliders:  (Default value = None)
-        :param hitable_colliders:  (Default value = None)
-        :param death_colliders:  (Default value = None)
-        :param save_colliders:  (Default value = None)
-        :param water_colliders:  (Default value = None)
-        :param transitions:  (Default value = None)
-        :param hit_occured:  (Default value = False)
-        :param allow_movement: (Defulat value = True)
-
-        """
-        level_state_changes = {"reset":False, "transition":None, "respawn":False, "hit":False}
-
-        # Dust states
+        # Setup dust states
         hard_landing, soft_landing, hard_turn = False, False, False
 
         # Check for transition events
         if not transitions == None and self.transition_frames == 0:
-            collision = self.collider.collidelist([d["collider"] for d in transitions])
+            # Extract colliders from transitions then calculate collision with player
+            collision = self.collider.collidelist(
+                [d["collider"] for d in transitions])
+            
+            # If collision occurs setup constant velocity based on direction 
+            # Setup state to transition out of level 
             if not collision == -1:
                 self.transition = transitions[collision]
                 self.transition_frames = self.transition_max_frames
                 if self.transition["direction"] == "S":
-                    self.velocity = self.velocity.length() * pygame.Vector2(0,1)
+                    self.velocity.x = 0
+                    self.velocity.y = abs(self.velocity.y)
                     Settings.SOUND_EFFECTS["jump"].Play(fade_in_ms=200)
                     self.play_animation("idle")
                 elif self.transition["direction"] == "N":
-                    self.velocity = max(self.velocity.length(), self.gravity.y/5) * pygame.Vector2(0,-1)
+                    self.velocity.x = 0
+                    # Make sure player makes itself out of the screen
+                    self.velocity.y = max(abs(self.velocity.y), self.gravity.y/5)
                     Settings.SOUND_EFFECTS["falling"].Play(fade_in_ms=200)
                     self.play_animation("idle")
                 elif self.transition["direction"] == "W":
-                    self.constant_velocity = pygame.Vector2(-self.walk_speed, 0)
+                    self.constant_velocity = pygame.Vector2(
+                        -self.walk_speed, 0)
                     self.play_animation("walk")
                     Settings.SOUND_EFFECTS["run"].Play(fade_in_ms=200)
                 elif self.transition["direction"] == "E":
                     self.constant_velocity = pygame.Vector2(self.walk_speed, 0)
                     Settings.SOUND_EFFECTS["run"].Play(fade_in_ms=200)
                     self.play_animation("walk")
-        
+
+        # During transitions don't allow player movement and limited physics 
         if self.transition_frames > 0:
             self.transition_frames -= 1
+            # When transition is complete change level_state_changes
             if self.transition_frames == 0:
                 level_state_changes["transition"] = self.transition
             if not self.transition == None:
-                # Apply gravity
+                # Apply gravity during horizontal transition, combats if player jumps into transition
                 if not (self.transition["direction"] == "N" or self.transition["direction"] == "S"):
                     self.velocity += delta * self.gravity
         else:
             if self.jump_grace_frames > 0:
-                self.jump_grace_frames-=1
+                self.jump_grace_frames -= 1
 
+            # Calculate physics with water and splash animations 
             if not water_colliders == None:
-                    collisions = self.collider.collidelist(water_colliders)
-                    if not collisions == -1:
-                        collision = water_colliders[collisions]
-                        if not self.is_in_water:
-                            self.water_big_splash.play_animation("loop")
-                            water_rect = self.water_big_splash.animations_data[self.water_big_splash.animation_index]["frames"][0].get_rect()
-                            self.water_big_splash.position = pygame.Vector2(
-                                self.position.x + self.collider_offset.x + self.collider_size.x / 2 - water_rect.width / 2,
+                collisions = self.collider.collidelist(water_colliders)
+                if not collisions == -1:
+                    collision = water_colliders[collisions]
+                    if not self.is_in_water:
+                        # If player enters water make big splash
+                        self.water_big_splash.play_animation("loop")
+                        water_rect = self.water_big_splash.animations_data[self.water_big_splash.animation_index]["frames"][0].get_rect(
+                        )
+                        self.water_big_splash.position = pygame.Vector2(
+                            self.position.x + self.collider_offset.x +
+                            self.collider_size.x / 2 - water_rect.width / 2,
+                            collision.top - water_rect.height,
+                        )
+                    else:
+                        # If player walking in water make small splashes
+                        if not self.water_splash.animation_playing and abs(self.constant_velocity.x) > 0:
+                            self.water_splash.play_animation("loop")
+                            water_rect = self.water_big_splash.animations_data[self.water_splash.animation_index]["frames"][0].get_rect(
+                            )
+                            self.water_splash.position = pygame.Vector2(
+                                self.position.x + self.collider_offset.x +
+                                self.collider_size.x / 2 - water_rect.width / 2,
                                 collision.top - water_rect.height,
                             )
-                        else:
-                            if not self.water_splash.animation_playing and abs(self.constant_velocity.x) > 0:
-                                self.water_splash.play_animation("loop")
-                                water_rect = self.water_big_splash.animations_data[self.water_splash.animation_index]["frames"][0].get_rect()
-                                self.water_splash.position = pygame.Vector2(
-                                    self.position.x + self.collider_offset.x + self.collider_size.x / 2 - water_rect.width / 2,
-                                    collision.top - water_rect.height,
-                                )
-                        self.is_in_water = True
-                    else:
-                        self.is_in_water = False
+                    self.is_in_water = True
+                else:
+                    self.is_in_water = False
             else:
                 self.is_in_water = False
 
+            # Calculate damage events
             attack_colliders = self.get_attack_colliders()
             collision = False
             if not attack_colliders == None:
                 for attack in attack_colliders:
-                    collision = collision or (not attack.collidelist(hitable_colliders) == -1)
-            
+                    collision = collision or (
+                        not attack.collidelist(hitable_colliders) == -1)
+
             if hit_occured or collision:
                 self.can_attack = False
                 if collision:
-                    # Impart upwards velocity in bounce
+                    # Impart velocity if bounce
                     if self.animation_name == "attack0":
-                        self.velocity.x = (self.flipX*2 - 1)*self.bounce_speed.x
+                        # Flip bounce depending on directions
+                        self.velocity.x = (self.flipX*2 - 1) * \
+                            self.bounce_speed.x
                         self.velocity.y = -self.bounce_speed.y/2
                     elif self.animation_name == "attack1" and not self.is_on_ground:
                         self.velocity.y = self.bounce_speed.y
@@ -240,25 +330,31 @@ class Player(Sprite.AnimatedSprite):
                 # Ensure no double velocity, assumes bounce speed is greater
                 elif hit_occured:
                     if self.animation_name == "attack0":
-                        self.velocity.x = (self.flipX*2 - 1)*self.knockback_speed.x
+                        # Flip bounce depending on direction facing
+                        self.velocity.x = (self.flipX*2 - 1) * \
+                            self.knockback_speed.x
                     elif self.animation_name == "attack1" and not self.is_on_ground:
                         self.velocity.y = self.knockback_speed.y
                     elif self.animation_name == "attack2":
                         self.velocity.y = -self.knockback_speed.y
 
+            # handle damage flash and invincibility frames
             self.is_white = False
             if not self.iframes == 0 and not self.animation_name == "death":
                 self.iframes -= 1
 
-                flash_distribution = [1,1,1,1,0,1,1,1,0,0,1,1,0,0,0,1,0,0,0]
+                flash_distribution = [1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0]
                 if flash_distribution[int(((self.iframe_length - self.iframes) / self.iframe_length)*(len(flash_distribution)-1))]:
                     self.is_white = True
 
+            # handle player movement and animations
             if (not (self.animation_name == "sit" or self.animation_name == "unsit" or self.animation_name == "death") or (self.animation_finished and not self.animation_name == "sit")) and allow_movement:
                 if not self.key_state["left"] == self.key_state["right"]:
+                    # stay still if both keys are pressed
                     if self.key_state["right"]:
                         self.flipX = False
 
+                        # velocity changed instananeously causes hard turn
                         if self.constant_velocity.x < 0:
                             hard_turn = True
 
@@ -267,13 +363,13 @@ class Player(Sprite.AnimatedSprite):
                         else:
                             self.constant_velocity.x = self.walk_speed
 
+                        # give walk animation low priority
                         if self.animation_name == "idle" or not self.animation_playing:
                             self.play_animation("walk", loop=True)
-
-                        
                     elif self.key_state["left"]:
                         self.flipX = True
 
+                        # velocity changed instananeously causes hard turn
                         if self.constant_velocity.x > 0:
                             hard_turn = True
 
@@ -282,22 +378,26 @@ class Player(Sprite.AnimatedSprite):
                         else:
                             self.constant_velocity.x = -self.walk_speed
 
+                        # give walk animation low priority
                         if self.animation_name == "idle" or not self.animation_playing:
                             self.play_animation("walk", loop=True)
                 else:
                     self.constant_velocity.x = 0
                     if self.animation_name == "walk" or not self.animation_playing:
-                        self.play_animation("idle", loop=True)     
+                        # cancel walk animation to idle
+                        self.play_animation("idle", loop=True)
             else:
-                self.constant_velocity.x = 0       
+                self.constant_velocity.x = 0
                 if (not allow_movement) and (self.animation_name == "walk" or not self.animation_playing):
-                    self.play_animation("idle", loop=True)     
+                    # cancel walk animation to idle
+                    self.play_animation("idle", loop=True)
 
-            # Apply forces
-            if not self.velocity == pygame.Vector2(0,0):
+            # apply resistance forces and gravity
+            if not self.velocity == pygame.Vector2(0, 0):
                 if self.is_in_water:
                     self.velocity -= self.velocity * delta * self.water_resistance
-                    self.velocity.y -= delta * random.randrange(0, self.gravity.y*1.5*100) / 100
+                    self.velocity.y -= delta * \
+                        random.randrange(0, self.gravity.y*1.5*100) / 100
                 elif self.is_on_ground:
                     self.velocity -= self.velocity * delta * self.floor_resistance
                 else:
@@ -305,21 +405,25 @@ class Player(Sprite.AnimatedSprite):
 
             self.velocity += delta * self.gravity
 
-            # Handle held jump velocity
+            # handle held jump velocity
             if (self.jumping and not self.key_state["jump"]) or self.jump_add_time > self.jump_add_max_time:
                 self.jumping = False
-            
+
+            # add extra velocity while jump is held
             if self.jumping:
                 self.jump_add_time += delta
                 self.velocity.y += delta * self.jump_add_speed
-
         old_position = copy.deepcopy(self.position)
+        # Apply velocities
         self.position += (self.velocity + self.constant_velocity) * delta
 
+        # Adjust collider positions
         self.collider.x = self.position.x + self.collider_offset.x
         self.collider.y = self.position.y + self.collider_offset.y
-        self.floor_collider.x = self.position.x + self.collider_offset.x + self.collider_size.x/4
-        self.floor_collider.y = self.position.y + self.collider_offset.y + self.collider_size.y
+        self.floor_collider.x = self.position.x + \
+            self.collider_offset.x + int(self.collider_size.x/1.6) / 4
+        self.floor_collider.y = self.position.y + \
+            self.collider_offset.y + self.collider_size.y
 
         if not colliders == None:
             collision = self.floor_collider.collidelist(colliders)
@@ -331,7 +435,7 @@ class Player(Sprite.AnimatedSprite):
                         soft_landing = True
 
                 self.is_on_ground = True
-                
+
                 self.jump_grace_frames = self.jump_grace_max_frames
             else:
                 self.is_on_ground = False
@@ -356,13 +460,15 @@ class Player(Sprite.AnimatedSprite):
                     # Combat high velocities passing through thin colliders, note: fails when v*dt > size
                     if abs(self.velocity.x*delta) > self.collider.width / 2:
                         if self.velocity.x > 0:
-                            push_x = collider.left - self.collider.width - self.collider_offset.x - self.position.x
+                            push_x = collider.left - self.collider.width - \
+                                self.collider_offset.x - self.position.x
                         else:
                             push_x = collider.right - self.collider_offset.x - self.position.x
-                    
+
                     if abs(self.velocity.y*delta) > self.collider.height / 2:
                         if self.velocity.y > 0:
-                            push_y = collider.top - self.collider.height - self.collider_offset.y - self.position.y+1
+                            push_y = collider.top - self.collider.height - \
+                                self.collider_offset.y - self.position.y+1
                         else:
                             push_y = collider.bottom - self.collider_offset.y - self.position.y
 
@@ -390,15 +496,18 @@ class Player(Sprite.AnimatedSprite):
                 self.iframes = self.iframe_length
                 self.play_animation("damage")
                 self.hearts -= 1
-                
+
                 # Apply knockback
                 s = pygame.Vector2(
-                    damage_colliders[collision].left+damage_colliders[collision].width/2, 
-                    damage_colliders[collision].top+damage_colliders[collision].height/2,
+                    damage_colliders[collision].left +
+                    damage_colliders[collision].width/2,
+                    damage_colliders[collision].top +
+                    damage_colliders[collision].height/2,
                 ) - (self.position + self.collider_offset + self.collider_size/2)
-                self.velocity.x = self.velocity.x + self.damage_knockback_speed*(int(s.x < 0)*2 - 1)
-                self.velocity.y = self.velocity.y + self.damage_knockback_speed*(int(s.y < 0)*2 - 1)
-
+                self.velocity.x = self.velocity.x + \
+                    self.damage_knockback_speed*(int(s.x < 0)*2 - 1)
+                self.velocity.y = self.velocity.y + \
+                    self.damage_knockback_speed*(int(s.y < 0)*2 - 1)
 
         # Check for death events
         if not death_colliders == None and not self.animation_name == "death":
@@ -409,7 +518,7 @@ class Player(Sprite.AnimatedSprite):
 
         if self.hearts == 0 and not self.animation_name == "death":
             level_state_changes["respawn"] = True
-        
+
         # Check for save possibility
         self.can_save = False
         if not save_colliders == None:
@@ -421,57 +530,69 @@ class Player(Sprite.AnimatedSprite):
         if self.is_on_ground and abs((self.position - old_position).x) > 1:
             if not hard_turn and not self.short_stop.animation_playing:
                 self.short_stop.play_animation("loop")
-                stop_rect = self.short_stop.animations_data[self.short_stop.animation_index]["frames"][0].get_rect()
+                stop_rect = self.short_stop.animations_data[self.short_stop.animation_index]["frames"][0].get_rect(
+                )
 
                 self.short_stop.flipX = self.flipX
                 if self.flipX:
                     self.short_stop.position = pygame.Vector2(
-                        self.position.x + self.collider_size.x + self.collider_offset.x - stop_rect.width,
-                        self.position.y + self.collider_offset.y + self.collider_size.y - stop_rect.height,
+                        self.position.x + self.collider_size.x +
+                        self.collider_offset.x - stop_rect.width,
+                        self.position.y + self.collider_offset.y +
+                        self.collider_size.y - stop_rect.height,
                     )
                 else:
                     self.short_stop.position = pygame.Vector2(
                         self.position.x + self.collider_offset.x,
-                        self.position.y + self.collider_offset.y + self.collider_size.y - stop_rect.height,
+                        self.position.y + self.collider_offset.y +
+                        self.collider_size.y - stop_rect.height,
                     )
             elif hard_turn and not self.hard_stop.animation_playing:
                 self.hard_stop.play_animation("loop")
-                stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect()
+                stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect(
+                )
 
                 self.hard_stop.flipX = self.flipX
                 if self.flipX:
                     self.hard_stop.position = pygame.Vector2(
-                        self.position.x + self.collider_size.x + self.collider_offset.x - stop_rect.width,
-                        self.position.y + self.collider_offset.y + self.collider_size.y - stop_rect.height,
+                        self.position.x + self.collider_size.x +
+                        self.collider_offset.x - stop_rect.width,
+                        self.position.y + self.collider_offset.y +
+                        self.collider_size.y - stop_rect.height,
                     )
                 else:
                     self.hard_stop.position = pygame.Vector2(
                         self.position.x + self.collider_offset.x,
-                        self.position.y + self.collider_offset.y + self.collider_size.y - stop_rect.height,
+                        self.position.y + self.collider_offset.y +
+                        self.collider_size.y - stop_rect.height,
                     )
 
         if hard_landing and not self.hard_stop1.animation_playing:
             self.hard_stop.play_animation("loop")
             self.hard_stop1.play_animation("loop")
-            stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect()
+            stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect(
+            )
 
             self.hard_stop.flipX = False
             self.hard_stop.position = pygame.Vector2(
-                self.position.x + self.collider_size.x + self.collider_offset.x - stop_rect.width,
-                self.position.y + self.collider_offset.y + self.collider_size.y - stop_rect.height,
+                self.position.x + self.collider_size.x +
+                self.collider_offset.x - stop_rect.width,
+                self.position.y + self.collider_offset.y +
+                self.collider_size.y - stop_rect.height,
             )
             self.hard_stop1.position = pygame.Vector2(
                 self.position.x + self.collider_offset.x,
-                self.position.y + self.collider_offset.y + self.collider_size.y - stop_rect.height,
+                self.position.y + self.collider_offset.y +
+                self.collider_size.y - stop_rect.height,
             )
-        
+
         if self.transition == None:
             # Create sounds
             if self.velocity.y > 100 and not self.is_on_ground and not Settings.SOUND_EFFECTS["falling"].IsPlaying():
                 Settings.SOUND_EFFECTS["falling"].Play(fade_in_ms=200)
             else:
                 Settings.SOUND_EFFECTS["falling"].Stop(fade_out_ms=100)
-            
+
             if abs(self.constant_velocity.x) > 0 and self.is_on_ground:
                 if self.is_in_water:
                     Settings.SOUND_EFFECTS["run"].Stop()
@@ -491,8 +612,7 @@ class Player(Sprite.AnimatedSprite):
                 Settings.SOUND_EFFECTS["land_hard"].Play(fade_in_ms=200)
             elif soft_landing:
                 Settings.SOUND_EFFECTS["land_soft"].Play(fade_in_ms=200)
-            
-                
+
             if level_state_changes["hit"] or level_state_changes["reset"]:
                 Settings.SOUND_EFFECTS["damage"].Play(fade_in_ms=200)
             if level_state_changes["respawn"] or level_state_changes["respawn"]:
@@ -516,7 +636,7 @@ class Player(Sprite.AnimatedSprite):
         self.hard_stop.update_animation(delta)
         self.hard_stop1.update_animation(delta)
 
-    def render(self, surface, offset=pygame.Vector2(0,0), size=None, delta=None):
+    def render(self, surface, offset=pygame.Vector2(0, 0), size=None, delta=None):
         """
 
         :param surface: 
@@ -535,7 +655,7 @@ class Player(Sprite.AnimatedSprite):
         dirty_rects += self.short_stop.render(surface, offset, size)
         dirty_rects += self.hard_stop.render(surface, offset, size)
         dirty_rects += self.hard_stop1.render(surface, offset, size)
-        
+
         return dirty_rects
 
     def input(self, events):
@@ -545,50 +665,59 @@ class Player(Sprite.AnimatedSprite):
 
         """
         save = False
+
         def reenable_attack(self):
             """ """
             self.can_attack = True
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]): 
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]):
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
-                    
+
                     self.key_state["up"] = True
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]): 
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]):
                     self.key_state["down"] = True
                     if self.can_save and (not self.animation_name == "death"):
                         if self.animation_name == "sit":
                             self.play_animation("unsit")
                         else:
                             save = True
-                            self.velocity = pygame.Vector2(0,0)
-                            self.constant_velocity = pygame.Vector2(0,0)
+                            self.velocity = pygame.Vector2(0, 0)
+                            self.constant_velocity = pygame.Vector2(0, 0)
                             self.play_animation("sit")
                     else:
                         if self.animation_name == "attack0" and self.frame_num < 4:
-                            Settings.SOUND_EFFECTS["attack"].Stop(fade_out_ms=100)
-                            Settings.SOUND_EFFECTS["big_attack"].Play(fade_in_ms=200)
+                            Settings.SOUND_EFFECTS["attack"].Stop(
+                                fade_out_ms=100)
+                            Settings.SOUND_EFFECTS["big_attack"].Play(
+                                fade_in_ms=200)
                             self.play_animation("attack2")
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["attack"]):
                     if self.animation_name == "sit":
-                            self.play_animation("unsit")
+                        self.play_animation("unsit")
                     else:
-                        self.key_state["attack"] = True    
+                        self.key_state["attack"] = True
                         if not self.animation_name == "death":
                             if self.key_state["down"] and not self.is_on_ground and (not self.animation_name == "death"):
                                 if not (self.animation_name == "attack2" and self.animation_playing):
-                                    self.play_animation("attack2", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
-                                    Settings.SOUND_EFFECTS["big_attack"].Play(fade_in_ms=200)
+                                    self.play_animation(
+                                        "attack2", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
+                                    Settings.SOUND_EFFECTS["big_attack"].Play(
+                                        fade_in_ms=200)
                             elif self.key_state["up"]:
                                 if not (self.animation_name == "attack1" and self.animation_playing):
-                                    self.play_animation("attack1", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
-                                    Settings.SOUND_EFFECTS["big_attack"].Play(fade_in_ms=200)
+                                    self.play_animation(
+                                        "attack1", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
+                                    Settings.SOUND_EFFECTS["big_attack"].Play(
+                                        fade_in_ms=200)
                             else:
                                 if not (self.animation_name == "attack0" and self.animation_playing):
-                                    self.play_animation("attack0", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
-                                    Settings.SOUND_EFFECTS["attack"].Play(fade_in_ms=200)
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]): 
+                                    self.play_animation(
+                                        "attack0", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
+                                    Settings.SOUND_EFFECTS["attack"].Play(
+                                        fade_in_ms=200)
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]):
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
                     else:
@@ -601,21 +730,27 @@ class Player(Sprite.AnimatedSprite):
                             self.velocity.y += self.jump_speed
 
                             Settings.SOUND_EFFECTS["jump"].Play(fade_in_ms=200)
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]): 
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]):
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
                     self.key_state["right"] = True
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]): 
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]):
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
                     self.key_state["left"] = True
             if event.type == pygame.KEYUP:
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]): self.key_state["jump"] = False
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]): self.key_state["up"] = False
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]): self.key_state["down"] = False
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]): self.key_state["right"] = False
-                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]): self.key_state["left"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]):
+                    self.key_state["jump"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]):
+                    self.key_state["up"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]):
+                    self.key_state["down"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]):
+                    self.key_state["right"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]):
+                    self.key_state["left"] = False
         return save
+
     def input_static(self, events):
         """
 
@@ -623,18 +758,28 @@ class Player(Sprite.AnimatedSprite):
 
         """
         for event in events:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]): self.key_state["jump"] = True
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]): self.key_state["up"] = True
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]): self.key_state["down"] = True
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]): self.key_state["right"] = True
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]): self.key_state["left"] = True
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]): self.key_state["jump"] = False
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]): self.key_state["up"] = False
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]): self.key_state["down"] = False
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]): self.key_state["right"] = False
-                    if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]): self.key_state["left"] = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]):
+                    self.key_state["jump"] = True
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]):
+                    self.key_state["up"] = True
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]):
+                    self.key_state["down"] = True
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]):
+                    self.key_state["right"] = True
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]):
+                    self.key_state["left"] = True
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]):
+                    self.key_state["jump"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]):
+                    self.key_state["up"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]):
+                    self.key_state["down"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]):
+                    self.key_state["right"] = False
+                if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]):
+                    self.key_state["left"] = False
 
     # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
     def copy(self):
