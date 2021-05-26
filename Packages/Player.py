@@ -166,7 +166,7 @@ class Player(Sprite.AnimatedSprite):
         Returns list of dirty rects.
 
         Args:
-            surface (pygame.surface): Surface to render to
+            surface (pygame.Surface): Surface to render to
             offset (pygame.Vector2): Camera offset
         """
         dirty_rects = []
@@ -425,23 +425,29 @@ class Player(Sprite.AnimatedSprite):
         self.floor_collider.y = self.position.y + \
             self.collider_offset.y + self.collider_size.y
 
+        # handle floor collider to determine if player on ground
         if not colliders == None:
             collision = self.floor_collider.collidelist(colliders)
             if not collision == -1:
                 if self.is_on_ground == False:
+                    # if is_on_ground state changing player is landing
                     if self.velocity.y > 200:
+                        # determine hardness depending on vertical velocity
                         hard_landing = True
                     elif self.velocity.y > 10:
                         soft_landing = True
 
                 self.is_on_ground = True
 
+                # give extra frames after leaving edge where player can still jump
                 self.jump_grace_frames = self.jump_grace_max_frames
             else:
                 self.is_on_ground = False
+
+            # handle perfectly inelastic collision between player and environment 
             for collider in colliders:
                 if self.collider.colliderect(collider):
-                    # Mininmise all translations
+                    # Mininmise all translations so player if translated least
                     push_y = min(
                         # Consider moving down; Hit the top side
                         collider.top - self.collider.height - self.collider_offset.y - self.position.y+1,
@@ -457,8 +463,10 @@ class Player(Sprite.AnimatedSprite):
                         key=abs
                     )
 
-                    # Combat high velocities passing through thin colliders, note: fails when v*dt > size
+                    # combat high velocities passing through thin colliders
+                    # NOTE: fails when v*dt > size since no collision occurs
                     if abs(self.velocity.x*delta) > self.collider.width / 2:
+                        # rather than minimising translation push player out in opposite direction to velocity 
                         if self.velocity.x > 0:
                             push_x = collider.left - self.collider.width - \
                                 self.collider_offset.x - self.position.x
@@ -466,73 +474,86 @@ class Player(Sprite.AnimatedSprite):
                             push_x = collider.right - self.collider_offset.x - self.position.x
 
                     if abs(self.velocity.y*delta) > self.collider.height / 2:
+                        # rather than minimising translation push player out in opposite direction to velocity 
                         if self.velocity.y > 0:
                             push_y = collider.top - self.collider.height - \
                                 self.collider_offset.y - self.position.y+1
                         else:
                             push_y = collider.bottom - self.collider_offset.y - self.position.y
 
-                    # Choose smaller transformation
+                    # choose smaller transformation between vertical and horizontal
                     if abs(push_x) < abs(push_y):
                         self.position.x = push_x + self.position.x
+                        # apply inelastic collision meaning all momentum is lost in direction of collision
                         if push_x > 0 and self.velocity.x < 0:
                             self.velocity.x = 0
                         elif push_x < 0 and self.velocity.x > 0:
                             self.velocity.x = 0
                     else:
                         self.position.y = push_y + self.position.y
+                        # apply inelastic collision meaning all momentum is lost in direction of collision
                         if push_y > 0 and self.velocity.y < 0:
                             self.velocity.y = 0
                         elif push_y < 0 and self.velocity.y > 0:
                             self.velocity.y = 0
         else:
+            # if no colliders exist player cant be on ground
             self.is_on_ground = False
 
-        # Check for damage events
+        # check for damage events if not invincible or dying (otherwise continual damage would be applied)
         if not damage_colliders == None and self.iframes == 0 and not self.animation_name == "death":
             collision = self.collider.collidelist(damage_colliders)
             if not collision == -1:
+                # apply changes to state and animations
                 level_state_changes["hit"] = True
                 self.iframes = self.iframe_length
                 self.play_animation("damage")
                 self.hearts -= 1
 
-                # Apply knockback
+                # get vector between center of damage collider and center of player
+                # NOTE: fails partially when player inside long collider
                 s = pygame.Vector2(
                     damage_colliders[collision].left +
                     damage_colliders[collision].width/2,
                     damage_colliders[collision].top +
                     damage_colliders[collision].height/2,
                 ) - (self.position + self.collider_offset + self.collider_size/2)
+
+                # apply knockback along axis if vector exists along axis
                 self.velocity.x = self.velocity.x + \
                     self.damage_knockback_speed*(int(s.x < 0)*2 - 1)
                 self.velocity.y = self.velocity.y + \
                     self.damage_knockback_speed*(int(s.y < 0)*2 - 1)
 
-        # Check for death events
+        # check for death events
         if not death_colliders == None and not self.animation_name == "death":
             collision = self.collider.collidelist(death_colliders)
             if not collision == -1:
+                # reset level if environmental death
                 self.hearts -= 1
                 level_state_changes["reset"] = True
 
+        # respawn from last save if no lives are left
         if self.hearts == 0 and not self.animation_name == "death":
             level_state_changes["respawn"] = True
 
-        # Check for save possibility
+        # handle save colliders
         self.can_save = False
         if not save_colliders == None:
-            collision = self.collider.collidelist(save_colliders)
-            if not collision == -1:
-                self.can_save = True
+            # set flag if player in save collider
+            self.can_save = not (self.collider.collidelist(save_colliders) == -1)
 
-        # Create dust trails
+        # create dust trails if moving on ground 
         if self.is_on_ground and abs((self.position - old_position).x) > 1:
             if not hard_turn and not self.short_stop.animation_playing:
+                # setup normal small dust trails
                 self.short_stop.play_animation("loop")
+
+                # get size of animation by getting first frames rectangle
                 stop_rect = self.short_stop.animations_data[self.short_stop.animation_index]["frames"][0].get_rect(
                 )
 
+                # position and flip animations based on player position ensuring dust is behind
                 self.short_stop.flipX = self.flipX
                 if self.flipX:
                     self.short_stop.position = pygame.Vector2(
@@ -548,6 +569,7 @@ class Player(Sprite.AnimatedSprite):
                         self.collider_size.y - stop_rect.height,
                     )
             elif hard_turn and not self.hard_stop.animation_playing:
+                # similarly setup hard stop animation
                 self.hard_stop.play_animation("loop")
                 stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect(
                 )
@@ -567,12 +589,15 @@ class Player(Sprite.AnimatedSprite):
                         self.collider_size.y - stop_rect.height,
                     )
 
+        # handle landing dust animations
         if hard_landing and not self.hard_stop1.animation_playing:
             self.hard_stop.play_animation("loop")
             self.hard_stop1.play_animation("loop")
+            # assume animation objects have same size
             stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect(
             )
 
+            # position clouds symmetrically spreading from landing
             self.hard_stop.flipX = False
             self.hard_stop.position = pygame.Vector2(
                 self.position.x + self.collider_size.x +
@@ -585,16 +610,20 @@ class Player(Sprite.AnimatedSprite):
                 self.position.y + self.collider_offset.y +
                 self.collider_size.y - stop_rect.height,
             )
-
+        
+        # create sounds depending on player state, only outside transition to avoid strange audio
         if self.transition == None:
-            # Create sounds
+            # fade in and out falling loop
             if self.velocity.y > 100 and not self.is_on_ground and not Settings.SOUND_EFFECTS["falling"].IsPlaying():
+                # play while player has sufficient downwards velocity
                 Settings.SOUND_EFFECTS["falling"].Play(fade_in_ms=200)
             else:
                 Settings.SOUND_EFFECTS["falling"].Stop(fade_out_ms=100)
 
+            # play and cancel walking or swiming loops depending on environment
             if abs(self.constant_velocity.x) > 0 and self.is_on_ground:
                 if self.is_in_water:
+                    # cancel sound rather than fading, covered by splash sound
                     Settings.SOUND_EFFECTS["run"].Stop()
                     if not Settings.SOUND_EFFECTS["swim"].IsPlaying():
                         Settings.SOUND_EFFECTS["swim"].Play(fade_in_ms=700)
@@ -606,13 +635,17 @@ class Player(Sprite.AnimatedSprite):
                 Settings.SOUND_EFFECTS["swim"].Stop(fade_out_ms=400)
                 Settings.SOUND_EFFECTS["run"].Stop()
 
+            # play landing sounds
             if (hard_landing or soft_landing) and self.is_in_water:
+                # play splashing sounds when landing on bottom
+                # NOTE: will fail for deep water since player wont land at same time as entering
                 Settings.SOUND_EFFECTS["land_splash"].Play(fade_in_ms=100)
             elif hard_landing:
                 Settings.SOUND_EFFECTS["land_hard"].Play(fade_in_ms=200)
             elif soft_landing:
                 Settings.SOUND_EFFECTS["land_soft"].Play(fade_in_ms=200)
 
+            # play damage and death sounds
             if level_state_changes["hit"] or level_state_changes["reset"]:
                 Settings.SOUND_EFFECTS["damage"].Play(fade_in_ms=200)
             if level_state_changes["respawn"] or level_state_changes["respawn"]:
@@ -622,9 +655,10 @@ class Player(Sprite.AnimatedSprite):
         return level_state_changes
 
     def update_animation(self, delta):
-        """
+        """ Updates player, and dust and splash animations. Called by render if delta is given
 
-        :param delta: 
+        Args:
+            delta (float): delta time between last call 
 
         """
         super().update_animation(delta)
@@ -637,41 +671,48 @@ class Player(Sprite.AnimatedSprite):
         self.hard_stop1.update_animation(delta)
 
     def render(self, surface, offset=pygame.Vector2(0, 0), size=None, delta=None):
+        """ renders player, and splash and splashes to surface.
+        
+        Args:
+            surface (pygame.Surface): level space surface to render to (required).
+            offset (pygame.Vector2): camera position which offsets all rendering.
+            size (None): polymorphic parameter which is ignored.
+            delta (float): delta time since last update, updates animations.
         """
-
-        :param surface: 
-        :param offset:  (Default value = pygame.Vector2(0, 0)
-        :param size:  (Default value = None)
-        :param delta:  (Default value = None)
-
-        """
+        # update if delta given then render all sprites
         if not delta == None:
             self.update_animation(delta)
-        dirty_rects = super().render(surface, offset, size)
+        dirty_rects = super().render(surface, offset)
 
-        dirty_rects += self.water_big_splash.render(surface, offset, size)
-        dirty_rects += self.water_splash.render(surface, offset, size)
+        dirty_rects += self.water_big_splash.render(surface, offset)
+        dirty_rects += self.water_splash.render(surface, offset)
 
-        dirty_rects += self.short_stop.render(surface, offset, size)
-        dirty_rects += self.hard_stop.render(surface, offset, size)
-        dirty_rects += self.hard_stop1.render(surface, offset, size)
+        dirty_rects += self.short_stop.render(surface, offset)
+        dirty_rects += self.hard_stop.render(surface, offset)
+        dirty_rects += self.hard_stop1.render(surface, offset)
 
+        # return rects to describe used parts of screen
         return dirty_rects
 
     def input(self, events):
-        """
+        """ Proccess pygame events for player actions.
 
-        :param events: 
+        Args:
+            events ([pygame.event.Event]) list of pygame events.
 
         """
+        # determine whether player saved
         save = False
 
+        # setup local function to reallow attacks after an attack animation is completed
         def reenable_attack(self):
-            """ """
             self.can_attack = True
+
         for event in events:
             if event.type == pygame.KEYDOWN:
+                # mapping keydown bindings to actions and updating key states
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]):
+                    # during sitting any movement button causes player to unsit
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
 
