@@ -12,8 +12,10 @@ class Console:
         level (Level.Level): Shared level object (required).
     """
     def __init__(self, screen, level):
+        # Save reference to level in self
         self.level = level
-        # Intialize console with its game scope being this class
+
+        # Intialize console with its game scope being this class so it has access to level
         self.console = game_console.Console(self, screen.get_width(), {
             'global' : {
                 'layout' : 'INPUT_BOTTOM',

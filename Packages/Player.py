@@ -8,7 +8,7 @@ from Packages import Settings, Sprite
 
 
 class Player(Sprite.AnimatedSprite):
-    """ Player class handling physics, rendering, state. Inherits from Sprite.AnimatedSprite
+    """ Player class handling physics, rendering, and state. Inherits from Sprite.AnimatedSprite.
 
     Args:
         position (pygame.Vector2): level space position of sprite.
@@ -87,7 +87,7 @@ class Player(Sprite.AnimatedSprite):
             self.collider_size.y
         )
         # Collider to check if player is on the ground
-        # reduce size to correct for error, avoiding wall climb
+        # Reduce size to correct for error, avoiding wall climb
         self.floor_collider = pygame.Rect(
             self.position.x+self.collider_offset.x+int(self.collider_size.x/1.6) / 4,
             self.position.y+self.collider_offset.y+(self.collider_size.y-1),
@@ -162,8 +162,8 @@ class Player(Sprite.AnimatedSprite):
                 return [inflated.move(0, self.attack1_length/2 + self.collider_size.y/2)]
 
     def render_colliders(self, surface, offset):
-        """ Draw current attack, player and floor colliders to level space.
-        Returns list of dirty rects.
+        """ Draw current attack, player and floor colliders to level space for debuging.
+        Returns list of dirty rects which have been rendered to.
 
         Args:
             surface (pygame.Surface): Surface to render to
@@ -171,6 +171,7 @@ class Player(Sprite.AnimatedSprite):
         """
         dirty_rects = []
 
+        # Draw player and floor colliders to surface
         collider = self.collider.move(offset)
         pygame.draw.rect(surface, (0, 255, 0), collider)
         dirty_rects.append(collider)
@@ -179,8 +180,10 @@ class Player(Sprite.AnimatedSprite):
         pygame.draw.rect(surface, (255, 255, 0), floor_collider)
         dirty_rects.append(floor_collider)
 
+        # Test conditions for valid attacks
         if self.can_attack:
             if self.animation_name == "attack0" and self.frame_num >= 2:
+                # Create modified copy of player collider to resize into attack 
                 attack_collider = collider.inflate(
                     self.attack0_length, self.attack0_width)
                 attack_collider.move_ip(
@@ -210,7 +213,7 @@ class Player(Sprite.AnimatedSprite):
         Returns dictionary of state changes: {"reset": (bool), "transition": (dict or None), "respawn": (bool), "hit": (bool)}
 
         Args:
-            delta (float): Constant physics tick, most likely matching 1 / fps.
+            delta (float): Constant physics tick, eg. 1 / fps.
             colliders ([pygame.rect]): List of level's physical colliders.
             damage_colliders ([pygame.rect]): List of level's damage colliders.
             hitable_colliders ([pygame.rect]): List of level's hitable colliders, bouncable objects.
@@ -246,8 +249,8 @@ class Player(Sprite.AnimatedSprite):
                     self.play_animation("idle")
                 elif self.transition["direction"] == "N":
                     self.velocity.x = 0
-                    # Make sure player makes itself out of the screen
-                    self.velocity.y = max(abs(self.velocity.y), self.gravity.y/5)
+                    # Make sure player makes it out of the screen by having a mininum upwards velocity
+                    self.velocity.y = -max(abs(self.velocity.y), self.gravity.y/5)
                     Settings.SOUND_EFFECTS["falling"].Play(fade_in_ms=200)
                     self.play_animation("idle")
                 elif self.transition["direction"] == "W":
@@ -260,7 +263,7 @@ class Player(Sprite.AnimatedSprite):
                     Settings.SOUND_EFFECTS["run"].Play(fade_in_ms=200)
                     self.play_animation("walk")
 
-        # During transitions don't allow player movement and limited physics 
+        # During transitions don't allow player controlled movement and limited physics 
         if self.transition_frames > 0:
             self.transition_frames -= 1
             # When transition is complete change level_state_changes
@@ -269,6 +272,7 @@ class Player(Sprite.AnimatedSprite):
             if not self.transition == None:
                 # Apply gravity during horizontal transition, combats if player jumps into transition
                 if not (self.transition["direction"] == "N" or self.transition["direction"] == "S"):
+                    # Apply constant gravitational acceleration using dv = a * dt
                     self.velocity += delta * self.gravity
         else:
             if self.jump_grace_frames > 0:
@@ -280,7 +284,7 @@ class Player(Sprite.AnimatedSprite):
                 if not collisions == -1:
                     collision = water_colliders[collisions]
                     if not self.is_in_water:
-                        # If player enters water make big splash
+                        # If player just entered water make big splash
                         self.water_big_splash.play_animation("loop")
                         water_rect = self.water_big_splash.animations_data[self.water_big_splash.animation_index]["frames"][0].get_rect(
                         )
@@ -317,7 +321,7 @@ class Player(Sprite.AnimatedSprite):
             if hit_occured or collision:
                 self.can_attack = False
                 if collision:
-                    # Impart velocity if bounce
+                    # Impart velocity if player bounced of hitable collider
                     if self.animation_name == "attack0":
                         # Flip bounce depending on directions
                         self.velocity.x = (self.flipX*2 - 1) * \
@@ -338,23 +342,24 @@ class Player(Sprite.AnimatedSprite):
                     elif self.animation_name == "attack2":
                         self.velocity.y = -self.knockback_speed.y
 
-            # handle damage flash and invincibility frames
+            # Handle damage flash and invincibility frames
             self.is_white = False
             if not self.iframes == 0 and not self.animation_name == "death":
                 self.iframes -= 1
 
+                # Map iframe completion to a flash distribution so player flashes less when losing invincibility
                 flash_distribution = [1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0]
                 if flash_distribution[int(((self.iframe_length - self.iframes) / self.iframe_length)*(len(flash_distribution)-1))]:
                     self.is_white = True
 
-            # handle player movement and animations
+            # Handle player movement and animations
             if (not (self.animation_name == "sit" or self.animation_name == "unsit" or self.animation_name == "death") or (self.animation_finished and not self.animation_name == "sit")) and allow_movement:
+                # Stay still if both keys are pressed
                 if not self.key_state["left"] == self.key_state["right"]:
-                    # stay still if both keys are pressed
                     if self.key_state["right"]:
                         self.flipX = False
 
-                        # velocity changed instananeously causes hard turn
+                        # If velocity changed instananeously show hard turn dust
                         if self.constant_velocity.x < 0:
                             hard_turn = True
 
@@ -363,13 +368,13 @@ class Player(Sprite.AnimatedSprite):
                         else:
                             self.constant_velocity.x = self.walk_speed
 
-                        # give walk animation low priority
+                        # Give walk animation low priority
                         if self.animation_name == "idle" or not self.animation_playing:
                             self.play_animation("walk", loop=True)
                     elif self.key_state["left"]:
                         self.flipX = True
 
-                        # velocity changed instananeously causes hard turn
+                        # If velocity changed instananeously causes hard turn
                         if self.constant_velocity.x > 0:
                             hard_turn = True
 
@@ -378,21 +383,21 @@ class Player(Sprite.AnimatedSprite):
                         else:
                             self.constant_velocity.x = -self.walk_speed
 
-                        # give walk animation low priority
+                        # Give walk animation low priority
                         if self.animation_name == "idle" or not self.animation_playing:
                             self.play_animation("walk", loop=True)
                 else:
                     self.constant_velocity.x = 0
+                    # Cancel walk animation to idle if player is still
                     if self.animation_name == "walk" or not self.animation_playing:
-                        # cancel walk animation to idle
                         self.play_animation("idle", loop=True)
             else:
                 self.constant_velocity.x = 0
+                # Cancel walk animation to idle if player is still
                 if (not allow_movement) and (self.animation_name == "walk" or not self.animation_playing):
-                    # cancel walk animation to idle
                     self.play_animation("idle", loop=True)
 
-            # apply resistance forces and gravity
+            # Apply resistance forces and gravity
             if not self.velocity == pygame.Vector2(0, 0):
                 if self.is_in_water:
                     self.velocity -= self.velocity * delta * self.water_resistance
@@ -402,22 +407,23 @@ class Player(Sprite.AnimatedSprite):
                     self.velocity -= self.velocity * delta * self.floor_resistance
                 else:
                     self.velocity -= self.velocity * delta * self.air_resistance
-
+            
+            # Apply constant gravitational acceleration using dv = a * dt
             self.velocity += delta * self.gravity
 
-            # handle held jump velocity
+            # Handle held jump velocity
             if (self.jumping and not self.key_state["jump"]) or self.jump_add_time > self.jump_add_max_time:
                 self.jumping = False
 
-            # add extra velocity while jump is held
+            # Add extra velocity while jump is held
             if self.jumping:
                 self.jump_add_time += delta
                 self.velocity.y += delta * self.jump_add_speed
         old_position = copy.deepcopy(self.position)
-        # Apply velocities
+        # Apply velocities using dx = v * dt
         self.position += (self.velocity + self.constant_velocity) * delta
 
-        # Adjust collider positions
+        # Adjust collider positions after position change
         self.collider.x = self.position.x + self.collider_offset.x
         self.collider.y = self.position.y + self.collider_offset.y
         self.floor_collider.x = self.position.x + \
@@ -425,14 +431,14 @@ class Player(Sprite.AnimatedSprite):
         self.floor_collider.y = self.position.y + \
             self.collider_offset.y + self.collider_size.y
 
-        # handle floor collider to determine if player on ground
+        # Handle floor collider to determine if player is on the ground
         if not colliders == None:
             collision = self.floor_collider.collidelist(colliders)
             if not collision == -1:
+                # If is_on_ground state changes player is landing
                 if self.is_on_ground == False:
-                    # if is_on_ground state changing player is landing
+                    # Determine landing hardness from vertical velocity
                     if self.velocity.y > 200:
-                        # determine hardness depending on vertical velocity
                         hard_landing = True
                     elif self.velocity.y > 10:
                         soft_landing = True
@@ -442,12 +448,13 @@ class Player(Sprite.AnimatedSprite):
                 # give extra frames after leaving edge where player can still jump
                 self.jump_grace_frames = self.jump_grace_max_frames
             else:
+                # No collisions mean players isnt on a floor
                 self.is_on_ground = False
 
-            # handle perfectly inelastic collision between player and environment 
+            # Handle perfectly inelastic collision between player and environment 
             for collider in colliders:
                 if self.collider.colliderect(collider):
-                    # Mininmise all translations so player if translated least
+                    # Mininmise magnitude of translations so player is pushed out how they came by minimising absoluted value
                     push_y = min(
                         # Consider moving down; Hit the top side
                         collider.top - self.collider.height - self.collider_offset.y - self.position.y+1,
@@ -463,10 +470,10 @@ class Player(Sprite.AnimatedSprite):
                         key=abs
                     )
 
-                    # combat high velocities passing through thin colliders
+                    # Combat high velocities passing through thin colliders
                     # NOTE: fails when v*dt > size since no collision occurs
                     if abs(self.velocity.x*delta) > self.collider.width / 2:
-                        # rather than minimising translation push player out in opposite direction to velocity 
+                        # Rather than minimising translation push player out in opposite direction to velocity 
                         if self.velocity.x > 0:
                             push_x = collider.left - self.collider.width - \
                                 self.collider_offset.x - self.position.x
@@ -474,43 +481,43 @@ class Player(Sprite.AnimatedSprite):
                             push_x = collider.right - self.collider_offset.x - self.position.x
 
                     if abs(self.velocity.y*delta) > self.collider.height / 2:
-                        # rather than minimising translation push player out in opposite direction to velocity 
+                        # Rather than minimising translation push player out in opposite direction to velocity 
                         if self.velocity.y > 0:
                             push_y = collider.top - self.collider.height - \
                                 self.collider_offset.y - self.position.y+1
                         else:
                             push_y = collider.bottom - self.collider_offset.y - self.position.y
 
-                    # choose smaller transformation between vertical and horizontal
+                    # Choose smaller transformation between vertical and horizontal
                     if abs(push_x) < abs(push_y):
                         self.position.x = push_x + self.position.x
-                        # apply inelastic collision meaning all momentum is lost in direction of collision
+                        # Apply inelastic collision meaning all momentum is lost in direction of collision
                         if push_x > 0 and self.velocity.x < 0:
                             self.velocity.x = 0
                         elif push_x < 0 and self.velocity.x > 0:
                             self.velocity.x = 0
                     else:
                         self.position.y = push_y + self.position.y
-                        # apply inelastic collision meaning all momentum is lost in direction of collision
+                        # Apply inelastic collision meaning all momentum is lost in direction of collision
                         if push_y > 0 and self.velocity.y < 0:
                             self.velocity.y = 0
                         elif push_y < 0 and self.velocity.y > 0:
                             self.velocity.y = 0
         else:
-            # if no colliders exist player cant be on ground
+            # If no colliders exist player cant be on ground
             self.is_on_ground = False
 
-        # check for damage events if not invincible or dying (otherwise continual damage would be applied)
+        # Check for damage events if not invincible or dying (otherwise continual damage would be applied)
         if not damage_colliders == None and self.iframes == 0 and not self.animation_name == "death":
             collision = self.collider.collidelist(damage_colliders)
             if not collision == -1:
-                # apply changes to state and animations
+                # Apply changes to state and animations
                 level_state_changes["hit"] = True
                 self.iframes = self.iframe_length
                 self.play_animation("damage")
                 self.hearts -= 1
 
-                # get vector between center of damage collider and center of player
+                # Get vector between center of damage collider and center of player
                 # NOTE: fails partially when player inside long collider
                 s = pygame.Vector2(
                     damage_colliders[collision].left +
@@ -519,41 +526,40 @@ class Player(Sprite.AnimatedSprite):
                     damage_colliders[collision].height/2,
                 ) - (self.position + self.collider_offset + self.collider_size/2)
 
-                # apply knockback along axis if vector exists along axis
+                # Apply knockback along axis if vector exists along axis
                 self.velocity.x = self.velocity.x + \
                     self.damage_knockback_speed*(int(s.x < 0)*2 - 1)
                 self.velocity.y = self.velocity.y + \
                     self.damage_knockback_speed*(int(s.y < 0)*2 - 1)
 
-        # check for death events
+        # Check for death events if player is alive
         if not death_colliders == None and not self.animation_name == "death":
             collision = self.collider.collidelist(death_colliders)
             if not collision == -1:
-                # reset level if environmental death
+                # Reset level if environmental death occurs
                 self.hearts -= 1
                 level_state_changes["reset"] = True
 
-        # respawn from last save if no lives are left
+        # Respawn from last save if no lives are left if player is alive
         if self.hearts == 0 and not self.animation_name == "death":
             level_state_changes["respawn"] = True
 
-        # handle save colliders
+        # Handle save colliders
         self.can_save = False
         if not save_colliders == None:
-            # set flag if player in save collider
+            # Set flag if player is in save collider
             self.can_save = not (self.collider.collidelist(save_colliders) == -1)
 
-        # create dust trails if moving on ground 
+        # Create dust trails if moving on ground 
         if self.is_on_ground and abs((self.position - old_position).x) > 1:
+            # Setup normal small dust trails if no hard turn and not already playing
             if not hard_turn and not self.short_stop.animation_playing:
-                # setup normal small dust trails
                 self.short_stop.play_animation("loop")
 
-                # get size of animation by getting first frames rectangle
-                stop_rect = self.short_stop.animations_data[self.short_stop.animation_index]["frames"][0].get_rect(
-                )
+                # Get size of animation by getting first frames rectangle
+                stop_rect = self.short_stop.animations_data[self.short_stop.animation_index]["frames"][0].get_rect()
 
-                # position and flip animations based on player position ensuring dust is behind
+                # Position and flip animations based on player position ensuring dust is behind
                 self.short_stop.flipX = self.flipX
                 if self.flipX:
                     self.short_stop.position = pygame.Vector2(
@@ -568,11 +574,10 @@ class Player(Sprite.AnimatedSprite):
                         self.position.y + self.collider_offset.y +
                         self.collider_size.y - stop_rect.height,
                     )
+            # Similarly setup hard turn animation if not already playing
             elif hard_turn and not self.hard_stop.animation_playing:
-                # similarly setup hard stop animation
                 self.hard_stop.play_animation("loop")
-                stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect(
-                )
+                stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect()
 
                 self.hard_stop.flipX = self.flipX
                 if self.flipX:
@@ -589,15 +594,14 @@ class Player(Sprite.AnimatedSprite):
                         self.collider_size.y - stop_rect.height,
                     )
 
-        # handle landing dust animations
+        # Handle landing dust animations
         if hard_landing and not self.hard_stop1.animation_playing:
             self.hard_stop.play_animation("loop")
             self.hard_stop1.play_animation("loop")
-            # assume animation objects have same size
-            stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect(
-            )
+            # Assume animation are the same
+            stop_rect = self.hard_stop.animations_data[self.hard_stop.animation_index]["frames"][0].get_rect()
 
-            # position clouds symmetrically spreading from landing
+            # Position clouds symmetrically spreading from landing
             self.hard_stop.flipX = False
             self.hard_stop.position = pygame.Vector2(
                 self.position.x + self.collider_size.x +
@@ -611,19 +615,19 @@ class Player(Sprite.AnimatedSprite):
                 self.collider_size.y - stop_rect.height,
             )
         
-        # create sounds depending on player state, only outside transition to avoid strange audio
+        # Create sounds depending on player state, only outside transition to avoid strange audio
         if self.transition == None:
-            # fade in and out falling loop
+            # Fade in and out falling loop
             if self.velocity.y > 100 and not self.is_on_ground and not Settings.SOUND_EFFECTS["falling"].IsPlaying():
-                # play while player has sufficient downwards velocity
+                # Play while player has sufficient downwards velocity
                 Settings.SOUND_EFFECTS["falling"].Play(fade_in_ms=200)
             else:
                 Settings.SOUND_EFFECTS["falling"].Stop(fade_out_ms=100)
 
-            # play and cancel walking or swiming loops depending on environment
+            # Play and cancel walking or swiming loops depending on environment
             if abs(self.constant_velocity.x) > 0 and self.is_on_ground:
                 if self.is_in_water:
-                    # cancel sound rather than fading, covered by splash sound
+                    # Cancel sound rather than fading, covered by splash sound
                     Settings.SOUND_EFFECTS["run"].Stop()
                     if not Settings.SOUND_EFFECTS["swim"].IsPlaying():
                         Settings.SOUND_EFFECTS["swim"].Play(fade_in_ms=700)
@@ -635,9 +639,9 @@ class Player(Sprite.AnimatedSprite):
                 Settings.SOUND_EFFECTS["swim"].Stop(fade_out_ms=400)
                 Settings.SOUND_EFFECTS["run"].Stop()
 
-            # play landing sounds
+            # Play landing sounds
             if (hard_landing or soft_landing) and self.is_in_water:
-                # play splashing sounds when landing on bottom
+                # Play splashing sounds when landing on bottom
                 # NOTE: will fail for deep water since player wont land at same time as entering
                 Settings.SOUND_EFFECTS["land_splash"].Play(fade_in_ms=100)
             elif hard_landing:
@@ -645,7 +649,7 @@ class Player(Sprite.AnimatedSprite):
             elif soft_landing:
                 Settings.SOUND_EFFECTS["land_soft"].Play(fade_in_ms=200)
 
-            # play damage and death sounds
+            # Play damage and death sounds
             if level_state_changes["hit"] or level_state_changes["reset"]:
                 Settings.SOUND_EFFECTS["damage"].Play(fade_in_ms=200)
             if level_state_changes["respawn"] or level_state_changes["respawn"]:
@@ -661,6 +665,7 @@ class Player(Sprite.AnimatedSprite):
             delta (float): delta time between last call 
 
         """
+        # Update base and auxiliary animations
         super().update_animation(delta)
 
         self.water_big_splash.update_animation(delta)
@@ -679,9 +684,11 @@ class Player(Sprite.AnimatedSprite):
             size (None): polymorphic parameter which is ignored.
             delta (float): delta time since last update, updates animations.
         """
-        # update if delta given then render all sprites
+        # Update if delta given
         if not delta == None:
             self.update_animation(delta)
+        
+        # Render all sprites
         dirty_rects = super().render(surface, offset)
 
         dirty_rects += self.water_big_splash.render(surface, offset)
@@ -691,17 +698,17 @@ class Player(Sprite.AnimatedSprite):
         dirty_rects += self.hard_stop.render(surface, offset)
         dirty_rects += self.hard_stop1.render(surface, offset)
 
-        # return rects to describe used parts of screen
+        # Return rects to describe stale parts of screen
         return dirty_rects
 
     def input(self, events):
         """ Proccess pygame events for player actions.
+        Returns if player triggered a save.
 
         Args:
             events ([pygame.event.Event]) list of pygame events.
 
         """
-        # determine whether player saved
         save = False
 
         # setup local function to reallow attacks after an attack animation is completed
@@ -710,48 +717,61 @@ class Player(Sprite.AnimatedSprite):
 
         for event in events:
             if event.type == pygame.KEYDOWN:
-                # mapping keydown bindings to actions and updating key states
+                # Mapping keydown bindings to actions and updating key states while button is pressed
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]):
-                    # during sitting any movement button causes player to unsit
+                    self.key_state["up"] = True
+
+                    # During sitting up button causes player to unsit
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
-
-                    self.key_state["up"] = True
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["down"]):
                     self.key_state["down"] = True
+
+                    # Down triggers save if player can
                     if self.can_save and (not self.animation_name == "death"):
+                        # If player already sitting unsit when pressing down
                         if self.animation_name == "sit":
                             self.play_animation("unsit")
+                        # Save game otherwise and ensure no velocity while sitting
                         else:
                             save = True
                             self.velocity = pygame.Vector2(0, 0)
                             self.constant_velocity = pygame.Vector2(0, 0)
                             self.play_animation("sit")
+                    # If player can't save and is attacking allow a change to the type of attack
                     else:
-                        if self.animation_name == "attack0" and self.frame_num < 4:
+                        # Allows late triggering of down slash
+                        if self.animation_name == "attack0" and self.frame_num < 4 and not self.is_on_ground and (not self.animation_name == "death"):
                             Settings.SOUND_EFFECTS["attack"].Stop(
-                                fade_out_ms=100)
+                                fade_out_ms=50)
                             Settings.SOUND_EFFECTS["big_attack"].Play(
-                                fade_in_ms=200)
+                                fade_in_ms=50)
                             self.play_animation("attack2")
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["attack"]):
+                    # If player sitting attack unsits
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
                     else:
+                        # Set state if valid since holding attack isnt meaningful
                         self.key_state["attack"] = True
+
+                        # Trigger attack of correct type if valid
                         if not self.animation_name == "death":
-                            if self.key_state["down"] and not self.is_on_ground and (not self.animation_name == "death"):
+                            # Allow down slash when pressing down and attacking in the air
+                            if self.key_state["down"] and not self.is_on_ground:
                                 if not (self.animation_name == "attack2" and self.animation_playing):
                                     self.play_animation(
                                         "attack2", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
                                     Settings.SOUND_EFFECTS["big_attack"].Play(
                                         fade_in_ms=200)
+                            # Always allow up slash
                             elif self.key_state["up"]:
                                 if not (self.animation_name == "attack1" and self.animation_playing):
                                     self.play_animation(
                                         "attack1", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
                                     Settings.SOUND_EFFECTS["big_attack"].Play(
                                         fade_in_ms=200)
+                            # Default to normal attack
                             else:
                                 if not (self.animation_name == "attack0" and self.animation_playing):
                                     self.play_animation(
@@ -759,27 +779,42 @@ class Player(Sprite.AnimatedSprite):
                                     Settings.SOUND_EFFECTS["attack"].Play(
                                         fade_in_ms=200)
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]):
+                    # Jump causes unsit
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
                     else:
+                        # Holding jump is only meaningful if intially valid
                         self.key_state["jump"] = True
-                        if (self.is_on_ground or self.jump_grace_frames > 0) and not self.animation_name == "sit" and not (self.transition_frames > 0) and (not self.animation_name == "death"):
+
+                        # Cause jump if alive player either on the ground or has grace frames, disallow during transition
+                        if (self.is_on_ground or self.jump_grace_frames > 0) and not (self.transition_frames > 0) and (not self.animation_name == "death"):
                             self.jumping = True
+
+                            # Reset jump add time so extra velocity can be added while button is held
                             self.jump_add_time = 0
+
+                            # Dont interupt iframes with jump for visual reasons
                             if self.iframes == 0:
                                 self.play_animation("jump")
+
+                            # Add initial jump upwards speed
                             self.velocity.y += self.jump_speed
 
-                            Settings.SOUND_EFFECTS["jump"].Play(fade_in_ms=200)
+                            Settings.SOUND_EFFECTS["jump"].Play(fade_in_ms=100)
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["right"]):
+                    # Movement causes unsit
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
+
                     self.key_state["right"] = True
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["left"]):
+                    # Movement causes unsit
                     if self.animation_name == "sit":
                         self.play_animation("unsit")
+
                     self.key_state["left"] = True
             if event.type == pygame.KEYUP:
+                # Reset key state when button is released
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]):
                     self.key_state["jump"] = False
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["up"]):
@@ -793,12 +828,13 @@ class Player(Sprite.AnimatedSprite):
         return save
 
     def input_static(self, events):
-        """
+        """ Handles pygame events for staticly player while paused so buttons can be held across pausing.
 
-        :param events: 
-
+        Args:
+            events ([pygame.event.Event]) list of pygame events.
         """
         for event in events:
+            # Set key state to true when keydown and false when keyup for each binding
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["jump"]):
                     self.key_state["jump"] = True
@@ -824,7 +860,8 @@ class Player(Sprite.AnimatedSprite):
 
     # https://stackoverflow.com/questions/57225611/how-to-deepcopy-object-which-contains-pygame-surface
     def copy(self):
-        """ """
+        """ Standard copy constructor for complex objects """
+
         copyobj = Player()
         for name, attr in self.__dict__.items():
             if hasattr(attr, 'copy') and callable(getattr(attr, 'copy')):

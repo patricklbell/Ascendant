@@ -87,7 +87,7 @@ class Level():
         """ """
         return self.water_colliders + self.toxic_water_colliders
 
-    def render_colliders(self, delta, surface, offset):
+    def render_colliders(self, surface, offset):
         """
 
         :param delta: 
@@ -216,13 +216,15 @@ class Level():
         save_filename = Settings.SAVE_FILETEMPLATE.substitute(num=str(Settings.SELECTED_SAVE))
         save_data = Settings.DEFAULT_SAVE
         save_data["name"] = self.name
-        save_data["has_begun"] = self.has_begun or not self.save_level == "Tutorial1"
+        save_data["has_begun"] = self.has_begun or not self.save_level == Settings.DEFAULT_SAVE["save_level"]
         save_data["save_level"] = self.save_level
         save_data["dialog_completion"] = self.save_dialog_completion
         save_data["challenges"] = self.challenges
 
         percent_completion = math.floor((len(self.save_dialog_completion) / 11)*1000)/10
         save_data["title_info"]["percentage_completion"] = percent_completion
+
+        print(save_data)
 
         # Update percentage completion in gui
         if save_data["has_begun"]:

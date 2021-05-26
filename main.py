@@ -83,8 +83,9 @@ level = Level.Level(
         collider_offset=pygame.Vector2(50*1.75/Settings.camera.scale[0], 50*1.75/Settings.camera.scale[1]),
         collider_size=pygame.Vector2(24*1.75/Settings.camera.scale[0], 24*1.75/Settings.camera.scale[1]),
         max_drift_distance=15,
-        alert_distance=110,
-        drift_speed=3,
+        drift_acceleration=3,
+        attack_acceleration=7,
+        alert_distance=120,
         calculate_flip=True,
     ),
     water_base=Water.Water(
@@ -136,7 +137,7 @@ def gameloop():
     transition_frames = 0
     untransition_frames = Settings.TRANSITION_MAX_FRAMES
 
-    # Core render and event loop
+    # Core render and event post test loop
     while is_running:
         # Set frame rate to 60fps
         dt = Settings.clock.tick(60) / 1000  # Seconds elapsed
@@ -237,10 +238,10 @@ def gameloop():
                     if enemy.state == "dead":
                         level.enemies.remove(enemy)
                     else:
-                        enemy.update_state(level.player.position)
+                        enemy.update_state(pygame.Vector2(level.player.collider.center))
 
                         # Calculates physics and ai, determines whether player has been hit
-                        if enemy.physics_process(1/60, physical_colliders, level.player.position, attack_colliders):
+                        if enemy.physics_process(1/60, physical_colliders, pygame.Vector2(level.player.collider.center), attack_colliders):
                             damage_freeze = 3
                             hit_occured = True
 
@@ -267,6 +268,7 @@ def gameloop():
                 # Fade screen when transitioning
                 elif not state_changes["transition"] == None:
                     transition_frames = Settings.TRANSITION_MAX_FRAMES
+                # Add freeze effect when hit
                 elif state_changes["hit"]:
                     damage_freeze = 8
 
@@ -297,8 +299,7 @@ def gameloop():
 
                 # Track camera to player if in leaving transition
                 if level.player.transition == None:
-                    Settings.camera.update_position(dt, pygame.Vector2(level.player.collider.left, level.player.collider.top) + pygame.Vector2(
-                        level.player.collider.size[0], 0), Settings.surface)
+                    Settings.camera.update_position(pygame.Vector2(level.player.collider.center[0], level.player.collider.center[1] - level.player.collider.size[1]), Settings.surface)
 
                 # Set rendering dt
                 _dt = dt
@@ -334,15 +335,12 @@ def gameloop():
 
             # Debug rendering for colliders
             if Settings.DEBUG:
-                level.render_colliders(
-                    dt, Settings.surface, Settings.camera.position)
+                level.render_colliders(Settings.surface, Settings.camera.position)
                 level.player.render_colliders(Settings.surface, Settings.camera.position)
                 for enemy in level.enemies:
-                    enemy.render_colliders(
-                        dt, Settings.surface, Settings.camera.position)
+                    enemy.render_colliders(Settings.surface, Settings.camera.position)
                 for collectable in level.collectables:
-                    collectable.render_colliders(
-                        dt, Settings.surface, Settings.camera.position)
+                    collectable.render_colliders(Settings.surface, Settings.camera.position)
 
             # Don't render health in EndGame
             if not is_end_game:
@@ -367,7 +365,7 @@ def gameloop():
                             level.load_level(
                                 level_name=level.player.transition["to_level"], transition=level.player.transition)
 
-                            # Update end_game gui to show how many challenges
+                            # Update end_game gui to show how many challenges were completed
                             Settings.gui.set_state("end_game")
                             Settings.gui.menus["end_game"]["challenge_label"].set_text(
                                 f"Challenges: {len(level.challenges)}/3")
@@ -379,24 +377,17 @@ def gameloop():
                             level.save_dialog_completion = Settings.DEFAULT_SAVE["dialog_completion"]
                             level.challenges = []
                             level.save_game()
-                            
-                            # Create longer fade to white for EndGame
-                            untransition_frames = 10*Settings.TRANSITION_MAX_FRAMES
                         else:
-                            # Load level then setup normal fade to white
-                            untransition_frames = Settings.TRANSITION_MAX_FRAMES
                             level.load_level(
                                 level_name=level.player.transition["to_level"], transition=level.player.transition)
+                        
+                        # Load setup fade to white
+                        untransition_frames = Settings.TRANSITION_MAX_FRAMES
             # Handle fade to white
             if untransition_frames > 0:
                 untransition_frames -= 1
-                if is_end_game:
-                    # Handle special case EndGame
-                    alpha = (untransition_frames /
-                             (Settings.TRANSITION_MAX_FRAMES*10))*255
-                else:
-                    alpha = (untransition_frames /
-                             Settings.TRANSITION_MAX_FRAMES)*255
+                alpha = (untransition_frames /
+                            Settings.TRANSITION_MAX_FRAMES)*255
                 Settings.surface.fill(
                     (0, 0, 0, alpha), special_flags=pygame.BLEND_RGBA_SUB)
 
