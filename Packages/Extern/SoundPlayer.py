@@ -1,7 +1,7 @@
 # Based on
 # https://github.com/steveway/papagayo-ng/blob/working_vol/SoundPlayer.py
 
-import audioop, os, platform, traceback, wave, pyaudio, threading, copy
+import os, traceback, pyaudio, threading
 
 from Packages import Settings
 from pydub import AudioSegment

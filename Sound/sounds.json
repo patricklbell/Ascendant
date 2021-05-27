@@ -2,18 +2,24 @@
     "sound_effects":[
         {"name":"damage", "filename":"Sound/Effects/damage.wav", "volume":100},
         {"name":"death", "filename":"Sound/Effects/death.wav", "volume":100},
-        {"name":"falling", "filename":"Sound/Effects/falling_loop.wav", "volume":100},
+        {"name":"falling", "filename":"Sound/Effects/falling_loop.wav", "volume":80},
         {"name":"jump", "filename":"Sound/Effects/jump.wav", "volume":70},
         {"name":"land_hard", "filename":"Sound/Effects/land_hard.wav", "volume":90},
         {"name":"land_soft", "filename":"Sound/Effects/land_soft.wav", "volume":100},
         {"name":"land_splash", "filename":"Sound/Effects/land_water.wav", "volume":100},
-        {"name":"attack", "filename":"Sound/Effects/attack_01.wav", "volume":50},
-        {"name":"big_attack", "filename":"Sound/Effects/attack_02.wav", "volume":60},
+        {"name":"attack", "filename":"Sound/Effects/attack_01.wav", "volume":75},
+        {"name":"big_attack", "filename":"Sound/Effects/attack_02.wav", "volume":75},
         {"name":"run", "filename":"Sound/Effects/walk_loop.wav", "volume":80},
-        {"name":"swim", "filename":"Sound/Effects/water_loop.wav", "volume":100}
+        {"name":"swim", "filename":"Sound/Effects/water_loop.wav", "volume":100},
+        {"name":"collectable", "filename":"Sound/Effects/collectable.wav", "volume":120},
+        {"name":"bounce", "filename":"Sound/Effects/bounce.wav", "volume":80},
+        {"name":"enemy_death", "filename":"Sound/Effects/enemy_death.wav", "volume":80},
+        {"name":"ascendance", "filename":"Sound/Effects/ascendance.wav", "volume":80},
+        {"name":"save", "filename":"Sound/Effects/save.wav", "volume":80},
+        {"name":"dialog", "filename":"Sound/Effects/dialog.wav", "volume":80}
     ],
     "music":[
-        {"name":"ambient", "filename":"Sound/ingame.wav", "volume":50},
-        {"name":"title", "filename":"Sound/theme.wav", "volume":150}
+        {"name":"ambient", "filename":"Sound/ingame.wav", "volume":75},
+        {"name":"title", "filename":"Sound/theme.wav", "volume":120}
     ]
 }

@@ -130,7 +130,7 @@ def gameloop():
     # Set gui state to intially be the title screen
     if is_title:
         Settings.gui.set_state("title")
-    Settings.MUSIC["title"].Play(loops=-1)
+        Settings.MUSIC["title"].Play(loops=-1)
 
     # Setup counters for multiframe states, fade into menu
     damage_freeze = 0
@@ -155,7 +155,7 @@ def gameloop():
                     debug_console.console.toggle()
             elif event.type == pygame.QUIT:
                 # Save game if quit during gameplay
-                if not is_title:
+                if not is_title and not is_end_game:
                     level.save_game()
                 return
             # Handle window resize
@@ -205,13 +205,14 @@ def gameloop():
             level.load_save(save_num=Settings.SELECTED_SAVE)
             if not name is None:
                 level.name = name
-            Settings.MUSIC["ambient"].Play(loops=-1)
-            Settings.MUSIC["title"].Stop(fade_out_ms=1000)
+            Settings.MUSIC["ambient"].Play(loops=-1, fade_in_ms=2000)
+            Settings.MUSIC["title"].Stop(fade_out_ms=500)
         # Handle quiting to title by superficially saving
         if not prev_title and is_title:
-            level.save_game()
-            Settings.MUSIC["ambient"].Stop(fade_out_ms=1000)
-            Settings.MUSIC["title"].Play(loops=-1)
+            if leave_endgame is None:
+                level.save_game()
+            Settings.MUSIC["ambient"].Stop(fade_out_ms=500)
+            Settings.MUSIC["title"].Play(loops=-1, fade_in_ms=2000)
         # Handle quiting final ending screen
         if leave_endgame is not None:
             is_end_game = False
@@ -257,7 +258,7 @@ def gameloop():
                 if state_changes["respawn"]:
                     def end_animation(self):
                         level.load_level(level_name=level.save_level)
-                        level.player.hearts = Settings.PLAYER_HEARTS
+                        level.player.hearts = Settings.PLAYER_HEARTS + len(level.challenges)
                         level.player.play_animation("unsit", speed=0.5)
                     level.player.play_animation(
                         "death", on_animation_end=end_animation)
@@ -277,11 +278,12 @@ def gameloop():
                     should_save = level.player.input(events)
                     if should_save:
                         Settings.gui.save_animation.play_animation("base")
-                        level.player.hearts = Settings.PLAYER_HEARTS
+                        level.player.hearts = Settings.PLAYER_HEARTS + len(level.challenges)
                         level.save_level = level.level_name
                         level.save_dialog_completion = copy.deepcopy(
                             level.dialog_completion)
                         level.save_game()
+                        Settings.SOUND_EFFECTS["save"].Play()
                 else:
                     # Allows player to hold keys before ending dialog
                     level.player.input_static(events)
@@ -290,12 +292,15 @@ def gameloop():
                 for collectable in level.collectables[:]:
                     if collectable.state == "death":
                         # Slow and flash screen while collecting
-                        damage_freeze = 3
+                        damage_freeze = 6
                         level.player.is_white = True
+                        Settings.SOUND_EFFECTS["collectable"].Play(fade_in_ms=100,loops=-1)
                     if collectable.physics_process(1/60, level.player.collider):
                         level.collectables.remove(collectable)
                         # Save that player has collected
                         level.challenges.append(level.level_name)
+                        level.player.hearts = Settings.PLAYER_HEARTS + len(level.challenges)
+                        Settings.SOUND_EFFECTS["collectable"].Stop(fade_out_ms=50)
 
                 # Track camera to player if in leaving transition
                 if level.player.transition == None:
@@ -346,7 +351,7 @@ def gameloop():
             if not is_end_game:
                 # Ingame Gui rendering beneath gui
                 Settings.gui.render_ingame(
-                    dt, Settings.surface, level.player, Settings.camera.position)
+                    dt, Settings.surface, level.player, len(level.challenges), Settings.camera.position)
 
             # Handle fade to black during transitions
             if transition_frames > 0:
@@ -371,12 +376,15 @@ def gameloop():
                                 f"Challenges: {len(level.challenges)}/3")
 
                             # Reset save in both level and file
-                            level.name = Settings.DEFAULT_SAVE["name"]
-                            level.has_begun = Settings.DEFAULT_SAVE["has_begun"]
-                            level.save_level = Settings.DEFAULT_SAVE["save_level"]
-                            level.save_dialog_completion = Settings.DEFAULT_SAVE["dialog_completion"]
-                            level.challenges = []
+                            level.name = copy.deepcopy(Settings.DEFAULT_SAVE["name"])
+                            level.has_begun = copy.deepcopy(Settings.DEFAULT_SAVE["has_begun"])
+                            level.save_level = copy.deepcopy(Settings.DEFAULT_SAVE["save_level"])
+                            level.save_dialog_completion = copy.deepcopy(Settings.DEFAULT_SAVE["dialog_completion"])
+                            level.challenges = copy.deepcopy(Settings.DEFAULT_SAVE["challenges"])
                             level.save_game()
+
+                            Settings.SOUND_EFFECTS["ascendance"].Play()
+                            Settings.MUSIC["ambient"].Stop()
                         else:
                             level.load_level(
                                 level_name=level.player.transition["to_level"], transition=level.player.transition)
@@ -404,7 +412,7 @@ def gameloop():
                     dialogue_box.render(Settings.surface)
 
         # Render pygame_gui ui
-        Settings.gui.render(Settings.surface, Settings.camera.position, dt)
+        Settings.gui.render(Settings.surface, dt)
         Settings.gui_manager.draw_ui(Settings.surface)
 
         # Scale gui rendering to resized resolution
@@ -457,9 +465,10 @@ while gameloop() == 1:
     Settings.gui_manager.add_font_paths(
         "fff-forward", Settings.SRC_DIRECTORY + "UI/Fonts/pixel.ttf")
     Settings.gui = Gui.Gui(
-        health_spritesheet_filename=Settings.SRC_DIRECTORY +
-        "UI/Animations/health_spritesheet.json",
+        health_spritesheet_filename=Settings.SRC_DIRECTORY +"UI/Animations/health_spritesheet.json",
+        alternate_health_spritesheet_filename=Settings.SRC_DIRECTORY+"UI/Animations/health_spritesheet_alternate.json",
         health_sprite_filename=Settings.SRC_DIRECTORY+"UI/Images/health_bar_outline.png",
+        alternate_health_sprite_filename=Settings.SRC_DIRECTORY+"UI/Images/health_bar_outline_alternate.png",
         title_background_filename=Settings.SRC_DIRECTORY +
         "UI/Animations/pixel_fog_spritesheet.json",
         title_animation_filename=Settings.SRC_DIRECTORY +

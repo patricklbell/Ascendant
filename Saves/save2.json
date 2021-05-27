@@ -1,12 +1,1 @@
-{
-    "title_info": {
-        "percentage_completion": 0.0
-    },
-    "save_level":"Tutorial1",
-    "dialog_completion":{
-
-    },
-    "has_begun":false,
-    "name":"",
-    "challenges":[]
-}
+{"title_info": {"percentage_completion": 0.0}, "save_level": "Tutorial1", "dialog_completion": {}, "has_begun": false, "name": "", "challenges": []}

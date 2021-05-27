@@ -89,9 +89,9 @@ class Player(Sprite.AnimatedSprite):
         # Collider to check if player is on the ground
         # Reduce size to correct for error, avoiding wall climb
         self.floor_collider = pygame.Rect(
-            self.position.x+self.collider_offset.x+int(self.collider_size.x/1.6) / 4,
+            self.position.x+self.collider_offset.x+int(self.collider_size.x/2) / 2,
             self.position.y+self.collider_offset.y+(self.collider_size.y-1),
-            self.collider_size.x/1.6,
+            self.collider_size.x/2,
             1
         )
 
@@ -321,6 +321,7 @@ class Player(Sprite.AnimatedSprite):
             if hit_occured or collision:
                 self.can_attack = False
                 if collision:
+                    Settings.SOUND_EFFECTS["bounce"].Play()
                     # Impart velocity if player bounced of hitable collider
                     if self.animation_name == "attack0":
                         # Flip bounce depending on directions
@@ -427,7 +428,7 @@ class Player(Sprite.AnimatedSprite):
         self.collider.x = self.position.x + self.collider_offset.x
         self.collider.y = self.position.y + self.collider_offset.y
         self.floor_collider.x = self.position.x + \
-            self.collider_offset.x + int(self.collider_size.x/1.6) / 4
+            self.collider_offset.x + int(self.collider_size.x/2) / 2
         self.floor_collider.y = self.position.y + \
             self.collider_offset.y + self.collider_size.y
 
@@ -759,7 +760,7 @@ class Player(Sprite.AnimatedSprite):
                         if not self.animation_name == "death":
                             # Allow down slash when pressing down and attacking in the air
                             if self.key_state["down"] and not self.is_on_ground:
-                                if not (self.animation_name == "attack2" and self.animation_playing):
+                                if not (self.animation_name == "attack2" and self.frame_num < 6):
                                     self.play_animation(
                                         "attack2", on_animation_end=reenable_attack, on_animation_interrupt=reenable_attack)
                                     Settings.SOUND_EFFECTS["big_attack"].Play(

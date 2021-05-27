@@ -88,6 +88,7 @@ class Dialog():
             (self.spn not in level.save_dialog_completion) or (
                 not level.save_dialog_completion[self.spn])
         ):
+            Settings.SOUND_EFFECTS["dialog"].Play()
             self.activate(player_name)
 
             # Set level state so dialog not repeated in playthrough and polled to save
@@ -108,8 +109,11 @@ class Dialog():
                 if event.type == pygame.KEYDOWN:
                     # Player tries to move to next page
                     if event.key == pygame.key.key_code(Settings.USER_SETTINGS["bindings"]["dialog"]):
+                        Settings.SOUND_EFFECTS["dialog"].Stop()
                         # Cleans the text box to be able to go on printing text
                         if self.dialog_box.words:
+                            Settings.SOUND_EFFECTS["dialog"].Stop(fade_out_ms=100)
+                            Settings.SOUND_EFFECTS["dialog"].Play()
                             self.dialog_box.reset()
 
                         # The page has been printed and the box can now move pages
@@ -118,9 +122,13 @@ class Dialog():
                             self.dialog_box.kill()
                             self.page_index += 1
                             if self.page_index < len(self.pages):
+                                Settings.SOUND_EFFECTS["dialog"].Stop(fade_out_ms=100)
+                                Settings.SOUND_EFFECTS["dialog"].Play()
                                 self.__construct_box(
                                     self.pages[self.page_index])
                                 self.activate(player_name)
+                            else:
+                                Settings.SOUND_EFFECTS["dialog"].Stop(fade_out_ms=100)
 
             self.dialog_box.update()
 

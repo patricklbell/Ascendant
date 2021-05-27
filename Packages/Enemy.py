@@ -1,7 +1,7 @@
 import pygame, copy, random, math
 
 # For debugging
-from Packages import Sprite
+from Packages import Sprite, Settings
 
 class Enemy(Sprite.AnimatedSprite):
     """ Standard patrolling enemy which attempts to attack player. Inherits from Sprite.AnimatedSprite.
@@ -177,7 +177,7 @@ class Enemy(Sprite.AnimatedSprite):
 
             # Adjust collider positions after position change
             self.collider.topleft = (self.position + self.collider_offset).xy
-            self.weapons_collider.topleft = (self.position + self.weapons_collider_offset).xy
+            self.weapons_collider_flip.topleft = (self.position + self.weapons_collider_offset).xy
             self.weapons_collider.x = self.position.x + self.weapons_collider_offset.x + self.collider_size.x + self.weapons_collider_size.x
             self.weapons_collider.y = self.position.y + self.weapons_collider_offset.y
 
@@ -190,6 +190,7 @@ class Enemy(Sprite.AnimatedSprite):
                         on_animation_end=lambda self: self.update_state(state="dead"), 
                         on_animation_interrupt=lambda self: self.update_state(state="dead")
                     )
+                    Settings.SOUND_EFFECTS["enemy_death"].Play()
                     self.state = "death"
                     is_damaged = True
 
@@ -406,6 +407,8 @@ class FlyingEnemy(Sprite.AnimatedSprite):
                     # Set into transition state while death animation playing and set flag
                     self.state = "death"
                     is_damaged = True
+
+                    Settings.SOUND_EFFECTS["enemy_death"].Play()
 
             if not colliders == None:
                 for collider in colliders:

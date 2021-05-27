@@ -5,35 +5,60 @@ from Packages import Settings, Sprite
 
 
 class Gui():
-    """ """
+    """ Manages displaying and handles events for all non dialog GUI. 
+    
+    Args:
+        health_spritesheet_filename (str): File path for health animation (required).
+        alternate_health_spritesheet_filename (str): File path for extra health animations (required).
+        health_sprite_filename (str): File path for health image sprite (required).
+        alternate_health_sprite_filename (str): File path for extra health image sprite (required).
+        title_animation_filename (str): File path for title logo animation (required).
+        title_background_filename (str): File path for title background animation (required).
+        save_sprite_filename (str): File path for save hint image sprite (required).
+        save_animation_filename (str): File path for save animation icon (required).
+        state (str): Optional initial gui state.
+    """
 
-    def __init__(self, health_spritesheet_filename, health_sprite_filename, title_animation_filename, title_background_filename, save_sprite_filename, save_animation_filename, state=None):
+    def __init__(self, health_spritesheet_filename, alternate_health_spritesheet_filename, health_sprite_filename, alternate_health_sprite_filename, title_animation_filename, title_background_filename, save_sprite_filename, save_animation_filename, state=None):
+        # Setup state
         self.to_bind_key = ""
         self.selected_save = 0
 
+        # Setup animations and image sprites for title and ingame gui 
         scale = max(Settings.RESOLUTION[0] / 700, Settings.RESOLUTION[1] / 394)
         self.title_background = Sprite.AnimatedSprite(
             spritesheet_json_filename=title_background_filename, spritesheet_scale=(scale, scale))
-        self.title_background.play_animation("loop", loop=-1)
+        self.title_background.play_animation("loop", loop=True)
 
         self.title_animation = Sprite.AnimatedSprite(position=pygame.Vector2(
             Settings.RESOLUTION[0]/2-270/2, 75), spritesheet_json_filename=title_animation_filename, spritesheet_scale=(0.25, 0.25))
-        self.title_animation.play_animation("loop", loop=-1)
+        self.title_animation.play_animation("loop", loop=True)
 
         self.health_bar = Sprite.AnimatedSprite(
             spritesheet_json_filename=health_spritesheet_filename, spritesheet_scale=(2, 2))
         self.health_bar.play_animation("idle", loop=True)
+        self.alt_health_bar = Sprite.AnimatedSprite(
+            spritesheet_json_filename=alternate_health_spritesheet_filename, spritesheet_scale=(2, 2))
+        self.alt_health_bar.play_animation("idle", loop=True)
+
         self.health_outline = Sprite.ImageSprite(
             health_sprite_filename, scale=(2, 2))
         self.health_outline.z = 2
+        self.health_outline_alt = Sprite.ImageSprite(
+            alternate_health_sprite_filename, scale=(2, 2))
+        self.health_outline_alt.z = 2
+
         self.save_sprite = Sprite.ImageSprite(
             save_sprite_filename, scale=(1, 1))
         self.save_animation = Sprite.AnimatedSprite(
             spritesheet_json_filename=save_animation_filename, position=pygame.Vector2(0, Settings.RESOLUTION[1]/2-32), spritesheet_scale=(0.5, 0.5))
 
+        # Setup positioning constants
         vertical_gap, vertical_height = 40, 30
 
+        # Read saves to setup labels and see which saves have begun
         save_labels = ["", "", ""]
+        save_buttons = ["", "", ""]
         self.has_begun = [False, False, False]
         for i in range(3):
             save_filename = Settings.SAVE_FILETEMPLATE.substitute(num=str(i+1))
@@ -41,15 +66,21 @@ class Gui():
                 with open(save_filename) as json_file:
                     json_data = json.load(json_file)
                 self.has_begun[i] = json_data["has_begun"]
+                # Subsitute into format string if save has been begun otherwise show new game button
                 if json_data["has_begun"]:
                     save_labels[i] = f"SAVE {i+1} ({json_data['title_info']['percentage_completion']}%): {json_data['name'][:6] + (json_data['name'][6:] and '..')}"
+                    save_buttons[i] = "COTINUE"
                 else:
-                    save_labels[i] = "NEW GAME"
+                    save_labels[i] = f"SAVE {i+1}"
+                    save_buttons[i] = "NEW GAME"
             except FileNotFoundError as e:
                 if Settings.DEBUG:
                     print(f"Failed to load save {save_filename}, error: ", e)
-                save_labels[i] = "NEW GAME"
+                # By default show new game since the save will be written if it doesnt exist
+                save_labels[i] = f"SAVE {i+1}"
+                save_buttons[i] = "NEW GAME"
 
+        # Setup dictionary containing each menu's pygame_gui elements, positioning with relative rect
         self.menus = {
             "title": {
                 "new_game": pygame_gui.elements.UIButton(
@@ -106,7 +137,7 @@ class Gui():
                     manager=Settings.gui_manager
                 ),
                 "save1": pygame_gui.elements.UIButton(
-                    text="CONTINUE",
+                    text=save_buttons[0],
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2, Settings.RESOLUTION[1]/3), (200, vertical_height)),
                     object_id='#small_button',
@@ -123,7 +154,7 @@ class Gui():
                 "save2": pygame_gui.elements.UIButton(
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2, Settings.RESOLUTION[1]/3+vertical_gap), (200, vertical_height)),
-                    text="CONTINUE",
+                    text=save_buttons[1],
                     object_id='#small_button',
                     manager=Settings.gui_manager,
                     starting_height=2,
@@ -138,7 +169,7 @@ class Gui():
                 "save3": pygame_gui.elements.UIButton(
                     relative_rect=pygame.Rect(
                         (Settings.RESOLUTION[0]/2, Settings.RESOLUTION[1]/3+vertical_gap*2), (200, vertical_height)),
-                    text="CONTINUE",
+                    text=save_buttons[2],
                     object_id='#small_button',
                     manager=Settings.gui_manager,
                     starting_height=2,
@@ -325,11 +356,8 @@ class Gui():
                     manager=Settings.gui_manager
                 ),
                 "resolution": pygame_gui.elements.UIDropDownMenu(
-                    # options_list=["1120x315","808x342","772x433", "592x370", "660x495"],
-                    # options_list=["1280x360","850x360","820x460", "640x400", "700x525"],
-                    # options_list=["1100x300", "800x340","770x430", "600x380", "660x500"],*0.8
-                    # options_list=["880x240", "640x270","620x340", "480x300", "530x400"],
                     options_list=["11:3", "21:9", "16:9", "16:10", "4:3"],
+                    # Match current resolution to an aspect ratio
                     starting_option=["11:3", "21:9", "16:9", "16:10", "4:3"][[
                         "1100x300", "800x340", "770x430", "600x380", "660x500"].index(Settings.RESOLUTION_STR)],
                     relative_rect=pygame.Rect(
@@ -399,14 +427,16 @@ class Gui():
         }
         self.set_state(state)
 
-    def render_ingame(self, delta, surface, player, offset=pygame.Vector2(0, 0)):
-        """
+    def render_ingame(self, delta, surface, player, num_challenges, offset=pygame.Vector2(0, 0)):
+        """ Draws ingame gui including health bar and save hint and logo animation.
+        Returns list of dirty rectangles which have been rendered to.
 
-        :param delta: 
-        :param surface: 
-        :param player: 
-        :param offset:  (Default value = pygame.Vector2(0,0))
-
+        Args:
+            delta (float): Delta time elapsed since last render call, used for animations.
+            surface (pygame.Surface): Surface to be rendered to in gui space.
+            player (Player.Player): Player object to determine state.
+            num_challenges (int): Number of challenges player has completed.
+            offset (pygame.Vector2): Optional offset between player and save hint
         """
         dirty_rects = []
 
@@ -414,34 +444,59 @@ class Gui():
         if player.hearts == 0:
             health_fraction = 0
 
-        # Crop health to show fraction
+        # Crop health to cuttoff missing health
         if health_fraction == 0:
+            # For last live show empty health bar
             health_crop = 0
         else:
             health_crop = 16 + int(42*health_fraction)
         self.health_bar.render(surface, (10, 10),
                                size=(0, 0, health_crop*2, 17*2), delta=delta)
+        
+        # Crop extra health by different amount to show each extra life
+        if health_fraction > 1:
+            health_crop = 16 + int(7 * (player.hearts - Settings.PLAYER_HEARTS))
+            self.alt_health_bar.render(surface, (10, 6),
+                                size=(0, 0, health_crop*2, 17*2), delta=delta)
+        
+        # Display outline for each extra life unlocked even if unfilled
+        if num_challenges > 0:  
+            health_crop = 16 + int(7 * num_challenges)
+            dirty_rects += self.health_outline_alt.render(surface, (10, 6), 
+                size=(0, 0, health_crop*2, 17*2))
+
+        # Draw base outline
         dirty_rects += self.health_outline.render(
             surface, pygame.Vector2(10, 10))
 
-        # Render save icon
+        # Render save hint if player can save at player position
         if player.can_save:
             dirty_rects += self.save_sprite.render(
                 surface, offset + player.position)
+        # Always draw save animation since first and last frame are empty so only visible during animation
         dirty_rects += self.save_animation.render(surface, delta=delta)
 
         return dirty_rects
 
     def handle_events(self, events):
+        """ Process events for GUI. Returns tuple representing the gui state.
+        Tuple: (is game running, is pause menu open, is any title menu open, 
+        save number player selected to load, does display need to be restarted, 
+        players choosen name, has player left end game gui)
+
+        Args:
+            events ([pygame.events.Events]): List of pygame events to be processed (required).
         """
 
-        :param events: 
-
-        """
+        # Setup states to be returned
         running, restart, name, leave_endgame = True, False, None, None
+
+        # Process each event
         for event in events:
             if event.type == pygame.USEREVENT:
+                # Proccess left click on gui elements
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    # Handle each navigation button eg. quit to title
                     if event.ui_element == self.menus["paused"]["resume"]:
                         self.set_state()
                     elif event.ui_element == self.menus["paused"]["settings"]:
@@ -452,21 +507,28 @@ class Gui():
                         self.set_state("title")
                         leave_endgame = True
                     elif event.ui_element == self.menus["title"]["quit"]:
+                        # Quiting in title exits gameloop
                         running = False
                     elif event.ui_element == self.menus["title"]["new_game"]:
                         self.set_state("select_save")
                     elif event.ui_element == self.menus["title"]["settings"]:
                         self.set_state("title_settings")
-
+                    elif event.ui_element == self.menus["select_save"]["back"]:
+                        self.set_state("title")
+                    
+                    # Handle saving new settings from title menu
                     elif event.ui_element == self.menus["title_settings"]["save"]:
+                        # Return to title
                         self.set_state("title")
 
+                        # Map choosen aspect ratio to resolution
                         new_resolution = ["1100x300", "800x340", "770x430", "600x380", "660x500"][[
                             "11:3", "21:9", "16:9", "16:10", "4:3"].index(self.menus["title_settings"]["resolution"].selected_option)]
 
-                        # Update settings
+                        # Update global music and user settings objects
                         Settings.USER_SETTINGS["music_volume"] = self.menus["title_settings"]["music_volume"].get_current_value(
                         )
+                        # Scale each sound by its new volume
                         for key, sound in Settings.MUSIC.items():
                             if Settings.USER_SETTINGS["music"]:
                                 vol = Settings.USER_SETTINGS["music_volume"] * (
@@ -475,8 +537,10 @@ class Gui():
                             else:
                                 sound.SetVolume(0)
 
+                        # Update global music and user settings objects
                         Settings.USER_SETTINGS["sound_effects_volume"] = self.menus["title_settings"]["sound_effects_volume"].get_current_value(
                         )
+                        # Scale each sound by its new volume
                         for key, sound in Settings.SOUND_EFFECTS.items():
                             if Settings.USER_SETTINGS["sound_effects"]:
                                 vol = Settings.USER_SETTINGS["sound_effects_volume"] * (
@@ -485,16 +549,19 @@ class Gui():
                             else:
                                 sound.SetVolume(0)
 
+                        # If resolution was changed or display made fullscreen the display needs to be updated
                         if (not Settings.USER_SETTINGS["resolution"] == new_resolution) or (not Settings.is_fullscreen == Settings.USER_SETTINGS["fullscreen"]):
                             restart = True
-
                         Settings.USER_SETTINGS["resolution"] = new_resolution
+
+                        # Attempt to write new user settings file
                         try:
                             with open(Settings.USER_SETTINGS_PATH, 'w') as file:
                                 json.dump(Settings.USER_SETTINGS, file)
-                        except:
-                            print("Failed to write user settings")
-
+                        except Exception as e:
+                            if Settings.DEBUG:
+                                print("Failed to write user settings", e)
+                    # Handle each of the settings toggle buttons to switch between ON and OFF and update settings
                     elif event.ui_element == self.menus["title_settings"]["fullscreen"]:
                         Settings.USER_SETTINGS["fullscreen"] = not Settings.USER_SETTINGS["fullscreen"]
                         self.menus["title_settings"]["fullscreen"].set_text(
@@ -507,8 +574,10 @@ class Gui():
                         Settings.USER_SETTINGS["sound_effects"] = not Settings.USER_SETTINGS["sound_effects"]
                         self.menus["title_settings"]["sound_effects"].set_text(
                             ["OFF", "ON"][Settings.USER_SETTINGS["sound_effects"]])
+                    # Handle each button to load a save
                     elif event.ui_element == self.menus["select_save"]["save1"]:
                         self.selected_save = 1
+                        # If save hasnt begun prompt user for a name
                         if not self.has_begun[0]:
                             self.set_state("name")
                         else:
@@ -525,11 +594,11 @@ class Gui():
                             self.set_state("name")
                         else:
                             self.set_state()
+                    # Handle naming menu by setting name when player continues and entering game
                     elif event.ui_element == self.menus["name"]["continue"]:
                         name = self.menus["name"]["entry"].get_text()
                         self.set_state()
-                    elif event.ui_element == self.menus["select_save"]["back"]:
-                        self.set_state("title")
+                    # Update user settings file after changing bindings and saving
                     elif event.ui_element == self.menus["settings"]["save"] and not ("binding" in self.state):
                         self.set_state("paused")
                         try:
@@ -537,6 +606,7 @@ class Gui():
                                 json.dump(Settings.USER_SETTINGS, file)
                         except:
                             print("Failed to write user settings")
+                    # Match each button in control menu to bind the correct action and set state
                     elif event.ui_element == self.menus["settings"]["attack"] and not ("binding" in self.state):
                         self.set_state("settings", "binding")
                         self.to_bind_key = "attack"
@@ -558,13 +628,16 @@ class Gui():
                     elif event.ui_element == self.menus["settings"]["dialog"] and not ("binding" in self.state):
                         self.set_state("settings", "binding")
                         self.to_bind_key = "dialog"
-
+            # Procces escape key to exit menus
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    # Pause when in game
                     if len(self.state) == 0:
                         self.set_state("paused")
+                    # Unpause
                     elif ("paused" in self.state):
                         self.set_state()
+                    # Return to save from control menu and save modifications
                     elif ("settings" in self.state):
                         self.set_state("paused")
                         try:
@@ -572,65 +645,44 @@ class Gui():
                                 json.dump(Settings.USER_SETTINGS, file)
                         except:
                             print("Failed to write user settings")
+                    # Exit binding state without changing binding
                     elif ("binding" in self.state):
                         self.set_state("settings")
-                # elif event.key == pygame.K_DOWN:
-                #     if  ("settings" in self.state):
-                #         for i in range(len(self.settings_focus)):
-                #             self.menus["settings"][self.settings_focus[i]].unselect()
-                #         self.focused = (self.focused + 1) % len(self.settings_focus)
-                #         self.menus["settings"][self.settings_focus[self.focused]].select()
-                #     elif  ("paused" in self.state):
-                #         for i in range(len(self.paused_focus)):
-                #             self.menus["paused"][self.paused_focus[i]].unselect()
-                #         self.focused = (self.focused + 1) % len(self.paused_focus)
-                #         self.menus["paused"][self.paused_focus[self.focused]].select()
-                # elif event.key == pygame.K_UP:
-                #     if  ("settings" in self.state):
-                #         for i in range(len(self.settings_focus)):
-                #             self.menus["settings"][self.settings_focus[i]].unselect()
-                #         self.focused = min(self.focused - 1, len(self.settings_focus) - 1)
-                #         self.menus["settings"][self.settings_focus[self.focused]].select()
-                #     elif  ("paused" in self.state):
-                #         for i in range(len(self.paused_focus)):
-                #             self.menus["paused"][self.paused_focus[i]].unselect()
-                #         self.focused = min(self.focused - 1, len(self.paused_focus) - 1)
-                #         self.menus["paused"][self.paused_focus[self.focused]].select()
+                # For all non escape keys check if binding and if so bind new key to one just pressed
                 elif ("binding" in self.state):
+                    # Get key name from pygame
                     Settings.USER_SETTINGS["bindings"][self.to_bind_key] = pygame.key.name(
                         event.key)
+                    # Update settings
                     self.menus["settings"][self.to_bind_key].set_text(
                         pygame.key.name(event.key).upper())
+                    # Exit binding state
                     self.set_state("settings")
-                # elif event.key == pygame.K_RETURN:
-                #     if  ("settings" in self.state):
-                #         element = self.menus["settings"][self.settings_focus[self.focused]]
-                #         pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"user_type":pygame_gui.UI_BUTTON_PRESSED, "ui_element":element}))
-                #     elif  ("paused" in self.state):
-                #         element = self.menus["paused"][self.paused_focus[self.focused]]
-                #         pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"user_type":pygame_gui.UI_BUTTON_PRESSED, "ui_element":element}))
-
+        # Return tuple representing gui state
         return (running, not len(self.state) == 0,  ("title" in self.state) or ("select_save" in self.state) or ("title_settings" in self.state) or ("name" in self.state), self.selected_save, restart, name, leave_endgame)
 
-    def render(self, surface, offset, delta):
-        """
+    def render(self, surface, delta):
+        """ Draw sprites associated with gui to surface. Lies under gui elements.
 
-        :param surface: 
-        :param offset: 
-        :param delta: 
-
+        Args:
+            surface (pygame.Surface): Surface to render to in gui space.
+            delta (float): Time since last render call, used for animations.
         """
+        # Draw title background animation if in any title
         if ("title" in self.state) or ("select_save" in self.state) or ("title_settings" in self.state) or ("name" in self.state) or ("end_game" in self.state):
             self.title_background.render(
                 surface, pygame.Vector2(0, 0), delta=delta)
+        # Only draw logo animation on endgame and title screen
         if ("title" in self.state) or ("end_game" in self.state):
             self.title_animation.render(surface, delta=delta)
 
     def set_state(self, *state):
-        """
-        :param state:  (Default value = [])
+        """ Update gui state, changes visibility of elements and sprites.
 
+        Args:
+            *state (str): Variadic argument for setting any number of gui states together.
         """
+        # Show all menus which are in list of state, otherwise hide
         self.state = state
         for name, menu in self.menus.items():
             if name in state:
@@ -640,10 +692,12 @@ class Gui():
                 for el in menu.values():
                     el.hide()
 
+        # If list of states contain any title menu's show title background animation
         if set(["title_settings", "title", "select_save", "name"]).intersection(state):
             self.title_background.show()
         else:
             self.title_background.hide()
 
+        # Hide mouse cursor during gameplay
         pygame.mouse.set_visible(bool(set(
             ["paused", "settings",  "binding",  "title",  "select_save",  "title_settings", "name", "end_game"]).intersection(state)))
