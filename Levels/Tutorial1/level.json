@@ -68,7 +68,7 @@
             "save_progress_name":"tutorial_1_2"
         },
         {
-            "text":["Up, up...", "I must find the light", "Why must I find the light?"],
+            "text":["Up, up...", "I must find the light", "Why must I find the light?", "...Press Escape to pause..."],
             "save_progress_name":"tutorial_1_3"
         }
     ]

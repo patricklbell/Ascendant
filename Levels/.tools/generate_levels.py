@@ -1,3 +1,4 @@
+# Script to automate converting tmx files into images and entity files, not run by game
 import os, subprocess, tempfile, json
 import xml.etree.ElementTree as ET
 

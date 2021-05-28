@@ -1,10 +1,5 @@
-./.venv/PyAudio-0.2.11-cp39-cp39-win_amd64.whl
 pydub==0.24.1
 pygame==2.0.1
 pygame-gui==0.5.7
-
-# If pyaudio doesn't install correctly
-# On linux use your package manager
-# On windows:
-# pip install winpy
-# winpy install pyaudio
+pyaudio==0.2.11
+./.venv/PyAudio-0.2.11-cp39-cp39-win_amd64.whl

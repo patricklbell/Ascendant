@@ -32,7 +32,7 @@
         {
             "dark_bg": "#00000000",
             "selected_bg": "#00000000",
-            "normal_text": "#DDDDDDFF",
+            "normal_text": "#FFFFFFFF",
             "selected_text": "#FFFFFF",
             "normal_border": "#FFFFFF"
         },
